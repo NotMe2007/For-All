@@ -1,0 +1,308 @@
+-- Auto Farm - Complete farming script with mob attacking and flying
+-- Combines: NoClip/Flying, Mob Detection, Auto-Attack, and Utility Features
+-- loadstring(game:HttpGet("https://pastebin.com/raw/AsGJ0SDU"))()
+
+local Players = game:GetService('Players')
+local Workspace = game:GetService('Workspace')
+local ReplicatedStorage = game:GetService('ReplicatedStorage')
+local RunService = game:GetService('RunService')
+local VirtualUser = game:GetService('VirtualUser')
+
+-- Configuration via getgenv
+local _genv = getgenv()
+if _genv.AutoFarmEnabled == nil then
+    _genv.AutoFarmEnabled = false
+end
+if _genv.AutoFarmClass == nil then
+    _genv.AutoFarmClass = 'Mage'  -- Default class
+    _genv.AutoFarmClass = 'Archer' -- Ranged
+end
+
+-- Custom wait using Heartbeat
+local function wait(sec)
+    sec = tonumber(sec)
+    if sec and sec > 0 then
+        local t0 = os.clock()
+        while os.clock() - t0 < sec do
+            RunService.Heartbeat:Wait()
+        end
+    else
+        RunService.Heartbeat:Wait()
+    end
+end
+
+-- Get player
+local plr = Players.LocalPlayer
+if not plr then
+    return
+end
+
+-- Get player components (character, HRP, etc)
+local function getPlayerParts()
+    if not plr.Character then
+        return nil, nil, nil
+    end
+    
+    local character = plr.Character
+    local hrp = character:FindFirstChild('HumanoidRootPart')
+    local collider = character:FindFirstChild('Collider') or character:FindFirstChild('UpperTorso')
+    
+    return character, hrp, collider
+end
+
+-- NoClip/Flying implementation
+local function noClip()
+    pcall(function()
+        local character, hrp, collider = getPlayerParts()
+        if not character or not hrp or not collider then return end
+        
+        -- Create BodyVelocity for flying
+        if not hrp:FindFirstChild('BodyVelocity') then
+            local bv = Instance.new('BodyVelocity')
+            bv.Velocity = Vector3.new(0, 0, 0)
+            bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+            bv.P = 9000
+            bv.Parent = hrp
+        end
+        
+        -- Disable collision
+        hrp.CanCollide = false
+        collider.CanCollide = false
+    end)
+end
+
+-- Find all alive mobs (excluding player's familiar)
+local function getMobs()
+    local mobs = {}
+    local positions = {}
+    
+    -- Get player's familiar if they have one
+    local familiar = nil
+    pcall(function()
+        if plr.Character then
+            local props = plr.Character:FindFirstChild('Properties')
+            if props then
+                local famVal = props:FindFirstChild('Familiar')
+                if famVal and famVal.Value then
+                    familiar = famVal.Value
+                end
+            end
+        end
+    end)
+    
+    pcall(function()
+        if Workspace:FindFirstChild('Mobs') then
+            for _, mob in ipairs(Workspace.Mobs:GetChildren()) do
+                if mob == familiar then
+                    -- Skip player's familiar
+                elseif mob:FindFirstChild('Collider') and mob:FindFirstChild('HealthProperties') then
+                    -- Check if owned by player
+                    local mobProps = mob:FindFirstChild('MobProperties')
+                    if mobProps and mobProps:FindFirstChild('Owner') and mobProps.Owner.Value == plr then
+                        -- Skip owned/tamed mobs
+                    else
+                        local health = mob.HealthProperties:FindFirstChild('Health')
+                        if health and health.Value > 0 then
+                            table.insert(mobs, mob)
+                            local character, hrp = getPlayerParts()
+                            if hrp then
+                                table.insert(positions, hrp.Position)
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end)
+    
+    return mobs, positions
+end
+
+-- Move object to specific position using smooth tweening
+local tweenSpeed = 76  -- Adjust this value (lower = slower, safer for anti-cheat)
+local function moveTo(obj, x, y, z)
+    pcall(function()
+        local character, hrp = getPlayerParts()
+        if not hrp or not obj then return end
+        
+        local targetCFrame
+        if x and y and z then
+            targetCFrame = obj.CFrame * CFrame.new(x, y, z)
+        else
+            targetCFrame = obj.CFrame
+        end
+        
+        -- Calculate distance and time needed
+        local distance = (targetCFrame.Position - hrp.Position).Magnitude
+        local timeNeeded = distance / tweenSpeed
+        
+        -- Don't tween if already very close
+        if distance < 5 then
+            hrp.CFrame = targetCFrame
+            return
+        end
+        
+        -- Smooth interpolation using BodyVelocity
+        local bv = hrp:FindFirstChild('BodyVelocity')
+        if bv then
+            local direction = (targetCFrame.Position - hrp.Position).Unit
+            bv.Velocity = direction * tweenSpeed
+        end
+    end)
+end
+
+-- Attack mobs with skills (using Kill Aura separately)
+local function attackMobs()
+    -- Attack is handled by Kill Aura module
+    -- This function is a placeholder for future use
+end
+
+-- Fly towards mobs (attack handled by Kill Aura)
+spawn(function()
+    while true do
+        wait(0.1)
+        
+        if not _genv.AutoFarmEnabled then
+            -- When disabled, clean up physics immediately
+            pcall(function()
+                local character, hrp = getPlayerParts()
+                if character and hrp then
+                    -- Stop BodyVelocity
+                    local bv = hrp:FindFirstChild('BodyVelocity')
+                    if bv then
+                        bv.Velocity = Vector3.new(0, 0, 0)
+                    end
+                    
+                    -- Re-enable collision
+                    hrp.CanCollide = true
+                    local collider = character:FindFirstChild('Collider') or character:FindFirstChild('UpperTorso')
+                    if collider then
+                        collider.CanCollide = true
+                    end
+                end
+            end)
+            wait(1)
+        else
+            pcall(function()
+                noClip()
+                
+                -- Get closest mob (use getMobs to exclude familiar)
+                local mobs = getMobs()
+                
+                if #mobs > 0 then
+                    -- Find closest mob
+                    local character, hrp = getPlayerParts()
+                    if not hrp then return end
+                    
+                    local closest = mobs[1]
+                    local closestDist = (closest.Collider.Position - hrp.Position).Magnitude
+                    
+                    for _, mob in ipairs(mobs) do
+                        local dist = (mob.Collider.Position - hrp.Position).Magnitude
+                        if dist < closestDist then
+                            closest = mob
+                            closestDist = dist
+                        end
+                    end
+                    
+                    -- Fly above the mob
+                    if closest and closest:FindFirstChild('Collider') then
+                        moveTo(closest.Collider, 0, 20, 0)
+                    end
+                    
+                    -- Attack is handled by Kill Aura module
+                end
+            end)
+        end
+    end
+end)
+
+-- Utility: Remove damage numbers
+if Workspace then
+    Workspace.ChildAdded:Connect(function(v)
+        if v and v.Name == 'DamageNumber' and _genv.AutoFarmEnabled then
+            pcall(function() v:Destroy() end)
+        end
+    end)
+end
+
+-- Utility: Anti-AFK
+if plr and plr.Idled then
+    plr.Idled:Connect(function()
+        if _genv.AutoFarmEnabled then
+            pcall(function()
+                local camera = Workspace.CurrentCamera
+                VirtualUser:Button2Down(Vector2.new(0, 0), camera.CFrame)
+                task.wait(1)
+                VirtualUser:Button2Up(Vector2.new(0, 0), camera.CFrame)
+            end)
+        end
+    end)
+end
+
+-- API for control
+local AutoFarmAPI = {}
+
+function AutoFarmAPI.enable()
+    _genv.AutoFarmEnabled = true
+end
+
+function AutoFarmAPI.disable()
+    _genv.AutoFarmEnabled = false
+    
+    -- Wait a moment for the main loop to stop
+    wait(0.2)
+    
+    -- Clean up physics to prevent stuck state
+    pcall(function()
+        local character, hrp = getPlayerParts()
+        if not character or not hrp then return end
+        
+        -- Stop and remove BodyVelocity
+        local bv = hrp:FindFirstChild('BodyVelocity')
+        if bv then
+            bv.Velocity = Vector3.new(0, 0, 0)
+            wait(0.1)
+            bv:Destroy()
+        end
+        
+        -- Remove any other physics constraints
+        for _, desc in ipairs(character:GetDescendants()) do
+            if desc:IsA('BodyVelocity') or desc:IsA('BodyGyro') or desc:IsA('BodyPosition') then
+                desc:Destroy()
+            end
+        end
+        
+        -- Re-enable collision
+        hrp.CanCollide = true
+        local collider = character:FindFirstChild('Collider') or character:FindFirstChild('UpperTorso')
+        if collider then
+            collider.CanCollide = true
+        end
+        
+        -- Reset velocity to zero
+        hrp.Velocity = Vector3.new(0, 0, 0)
+        hrp.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+        
+        -- Reset humanoid state
+        local humanoid = character:FindFirstChild('Humanoid')
+        if humanoid then
+            humanoid:ChangeState(Enum.HumanoidStateType.Landed)
+            wait(0.1)
+            humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+        end
+    end)
+end
+
+function AutoFarmAPI.toggle()
+    _genv.AutoFarmEnabled = not _genv.AutoFarmEnabled
+end
+
+function AutoFarmAPI.setClass(className)
+    _genv.AutoFarmClass = className
+end
+
+_G.AutoFarmAPI = AutoFarmAPI
+getgenv().AutoFarmAPI = AutoFarmAPI
+
+return AutoFarmAPI
