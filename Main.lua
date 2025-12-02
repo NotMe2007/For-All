@@ -72,6 +72,98 @@ local UserInputService = game:GetService('UserInputService')
 local TweenService = game:GetService('TweenService')
 
 -- ============================================================================
+-- RANDOMIZED NAMING (Anti-Detection)
+-- ============================================================================
+
+local function generateRandomName(prefix)
+    local chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+    local length = math.random(8, 12)
+    local result = prefix or ''
+    for i = 1, length do
+        local rand = math.random(1, #chars)
+        result = result .. chars:sub(rand, rand)
+    end
+    return result
+end
+
+-- Generate unique names for this session
+local GUI_NAME = generateRandomName('Gui_')
+local MAIN_FRAME_NAME = generateRandomName('Frame_')
+local TITLE_BAR_NAME = generateRandomName('Title_')
+local CONTENT_NAME = generateRandomName('Content_')
+local BTN1_NAME = generateRandomName('Btn_')
+local BTN2_NAME = generateRandomName('Btn_')
+
+-- Randomized global keys
+local KILL_AURA_KEY = generateRandomName('k')
+local MAGNET_KEY = generateRandomName('m')
+local AUTOFARM_KEY = generateRandomName('a')
+local CHEST_KEY = generateRandomName('c')
+local PLACE_KEY = generateRandomName('p')
+
+-- ============================================================================
+-- LOAD PLACE DETECTION API
+-- ============================================================================
+
+local PlaceAPI = nil
+
+local function loadPlaceAPI()
+    -- Try to load from _G if already loaded
+    if _G[PLACE_KEY] then
+        PlaceAPI = _G[PLACE_KEY]
+        return true
+    end
+    if _G.PlaceAPI then
+        PlaceAPI = _G.PlaceAPI
+        _G[PLACE_KEY] = PlaceAPI
+        return true
+    end
+    
+    -- Otherwise, try to load from pastebin via loadstring
+    pcall(function()
+        local script = game:HttpGet("https://pastebin.com/raw/3fC7kawP")
+        local placeFunc = loadstring(script)
+        if placeFunc then
+            placeFunc()
+            if _G.PlaceAPI then
+                PlaceAPI = _G.PlaceAPI
+                _G[PLACE_KEY] = PlaceAPI
+                return true
+            end
+        end
+    end)
+    
+    return PlaceAPI ~= nil
+end
+
+-- ============================================================================
+-- PLACEID AND LOCATION DETECTION
+-- ============================================================================
+
+local PLACE_ID = game.PlaceId
+local currentLocation = nil
+
+local function updateLocation()
+    if PlaceAPI then
+        currentLocation = PlaceAPI.getCurrent()
+    end
+end
+
+local function isDungeon()
+    if currentLocation then
+        return currentLocation.isDungeon
+    end
+    return false
+end
+
+local function isWorldOrTower()
+    if currentLocation then
+        return currentLocation.isLobby or currentLocation.isTower
+    end
+    return true -- Default to enabled
+end
+
+-- ============================================================================
 -- LOAD KILL AURA API
 -- ============================================================================
 
@@ -79,8 +171,13 @@ local KillAuraAPI = nil
 
 local function loadKillAura()
     -- Try to load from _G if already loaded
+    if _G[KILL_AURA_KEY] then
+        KillAuraAPI = _G[KILL_AURA_KEY]
+        return true
+    end
     if _G.x9m1n then
         KillAuraAPI = _G.x9m1n
+        _G[KILL_AURA_KEY] = KillAuraAPI
         return true
     end
     
@@ -92,6 +189,7 @@ local function loadKillAura()
             killAuraFunc()
             if _G.x9m1n then
                 KillAuraAPI = _G.x9m1n
+                _G[KILL_AURA_KEY] = KillAuraAPI
                 return true
             end
         end
@@ -108,8 +206,13 @@ local MagnetAPI = nil
 
 local function loadMagnet()
     -- Try to load from _G if already loaded
+    if _G[MAGNET_KEY] then
+        MagnetAPI = _G[MAGNET_KEY]
+        return true
+    end
     if _G.x7d2k then
         MagnetAPI = _G.x7d2k
+        _G[MAGNET_KEY] = MagnetAPI
         return true
     end
     
@@ -121,6 +224,7 @@ local function loadMagnet()
             magnetFunc()
             if _G.x7d2k then
                 MagnetAPI = _G.x7d2k
+                _G[MAGNET_KEY] = MagnetAPI
                 return true
             end
         end
@@ -137,8 +241,13 @@ local AutoFarmAPI = nil
 
 local function loadAutoFarm()
     -- Try to load from _G if already loaded
+    if _G[AUTOFARM_KEY] then
+        AutoFarmAPI = _G[AUTOFARM_KEY]
+        return true
+    end
     if _G.AutoFarmAPI then
         AutoFarmAPI = _G.AutoFarmAPI
+        _G[AUTOFARM_KEY] = AutoFarmAPI
         return true
     end
     
@@ -150,12 +259,48 @@ local function loadAutoFarm()
             autoFarmFunc()
             if _G.AutoFarmAPI then
                 AutoFarmAPI = _G.AutoFarmAPI
+                _G[AUTOFARM_KEY] = AutoFarmAPI
                 return true
             end
         end
     end)
     
     return AutoFarmAPI ~= nil
+end
+
+-- ============================================================================
+-- LOAD CHEST COLLECTOR API
+-- ============================================================================
+
+local ChestAPI = nil
+
+local function loadChestCollector()
+    -- Try to load from _G if already loaded
+    if _G[CHEST_KEY] then
+        ChestAPI = _G[CHEST_KEY]
+        return true
+    end
+    if _G.ChestAPI then
+        ChestAPI = _G.ChestAPI
+        _G[CHEST_KEY] = ChestAPI
+        return true
+    end
+    
+    -- Otherwise, try to load from pastebin via loadstring
+    pcall(function()
+        local script = game:HttpGet("https://pastebin.com/raw/9282RzYC")
+        local chestFunc = loadstring(script)
+        if chestFunc then
+            chestFunc()
+            if _G.ChestAPI then
+                ChestAPI = _G.ChestAPI
+                _G[CHEST_KEY] = ChestAPI
+                return true
+            end
+        end
+    end)
+    
+    return ChestAPI ~= nil
 end
 
 -- ============================================================================
@@ -212,7 +357,7 @@ local function createVapeGUI()
 
     -- Create ScreenGui container
     local screenGui = Instance.new('ScreenGui')
-    screenGui.Name = 'ZenXGui'
+    screenGui.Name = GUI_NAME
     screenGui.ResetOnSpawn = false
     screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     screenGui.Parent = playerGui
@@ -222,7 +367,7 @@ local function createVapeGUI()
     -- ========================================================================
 
     local mainFrame = Instance.new('Frame')
-    mainFrame.Name = 'MainFrame'
+    mainFrame.Name = MAIN_FRAME_NAME
     mainFrame.Size = UDim2.new(0, 250, 0, 170)
     mainFrame.Position = UDim2.new(0.5, -125, 0, 20)
     mainFrame.BackgroundColor3 = Colors.bg_primary
@@ -242,7 +387,7 @@ local function createVapeGUI()
     -- ========================================================================
 
     local titleBar = Instance.new('Frame')
-    titleBar.Name = 'TitleBar'
+    titleBar.Name = TITLE_BAR_NAME
     titleBar.Size = UDim2.new(1, 0, 0, 35)
     titleBar.Position = UDim2.new(0, 0, 0, 0)
     titleBar.BackgroundColor3 = Colors.bg_secondary
@@ -301,7 +446,7 @@ local function createVapeGUI()
     -- ========================================================================
 
     local contentArea = Instance.new('Frame')
-    contentArea.Name = 'ContentArea'
+    contentArea.Name = CONTENT_NAME
     contentArea.Size = UDim2.new(1, 0, 1, -35)
     contentArea.Position = UDim2.new(0, 0, 0, 35)
     contentArea.BackgroundTransparency = 1
@@ -312,7 +457,7 @@ local function createVapeGUI()
     -- ========================================================================
 
     local autoFarmButton = Instance.new('TextButton')
-    autoFarmButton.Name = 'AutoFarmButton'
+    autoFarmButton.Name = BTN1_NAME
     autoFarmButton.Size = UDim2.new(1, -20, 0, 50)
     autoFarmButton.Position = UDim2.new(0, 10, 0, 10)
     autoFarmButton.BackgroundColor3 = Colors.accent_danger
@@ -333,23 +478,24 @@ local function createVapeGUI()
     -- ========================================================================
 
     local killAuraButton = Instance.new('TextButton')
-    killAuraButton.Name = 'KillAuraButton'
+    killAuraButton.Name = BTN2_NAME
     killAuraButton.Size = UDim2.new(1, -20, 0, 50)
     killAuraButton.Position = UDim2.new(0, 10, 0, 70)
-    autoFarmButton.BackgroundColor3 = Colors.accent_danger
-    autoFarmButton.BorderColor3 = Colors.border
-    autoFarmButton.BorderSizePixel = 1
-    autoFarmButton.TextColor3 = Colors.text_primary
-    autoFarmButton.TextSize = 14
-    autoFarmButton.Font = Enum.Font.GothamBold
-    autoFarmButton.Text = '🚀 AUTO FARM'
-    autoFarmButton.Parent = contentArea
+    killAuraButton.BackgroundColor3 = Colors.accent_danger
+    killAuraButton.BorderColor3 = Colors.border
+    killAuraButton.BorderSizePixel = 1
+    killAuraButton.TextColor3 = Colors.text_primary
+    killAuraButton.TextSize = 14
+    killAuraButton.Font = Enum.Font.GothamBold
+    killAuraButton.Text = '⚔ KILL AURA'
+    killAuraButton.Parent = contentArea
 
-    local autoFarmCorner = Instance.new('UICorner')
-    autoFarmCorner.CornerRadius = UDim.new(0, 6)
-    autoFarmCorner.Parent = autoFarmButton
+    local killAuraCorner = Instance.new('UICorner')
+    killAuraCorner.CornerRadius = UDim.new(0, 6)
+    killAuraCorner.Parent = killAuraButton
 
     -- Magnet is always enabled by default (no GUI button)
+    -- Chest Collector is auto-enabled based on PlaceID (no button)
 
     -- ========================================================================
     -- STATE MANAGEMENT
@@ -358,6 +504,16 @@ local function createVapeGUI()
     local killAuraEnabled = false
     local autoFarmEnabled = false
     local magnetEnabled = true  -- Magnet always enabled by default
+    -- Chest collector auto-managed by PlaceID
+    
+    -- Display PlaceID and location in title
+    local titleText = 'ZenX'
+    if currentLocation and currentLocation.name then
+        titleText = 'ZenX | ' .. currentLocation.name
+    else
+        titleText = 'ZenX | ID: ' .. tostring(PLACE_ID)
+    end
+    titleLabel.Text = titleText
 
     -- ========================================================================
     -- KILL AURA BUTTON INTERACTIONS
@@ -476,21 +632,37 @@ spawn(function()
     if plr then
         local playerGui = plr:FindFirstChild('PlayerGui')
         if playerGui then
-            local oldGui = playerGui:FindFirstChild('ZenXGui')
-            if oldGui then
-                oldGui:Destroy()
+            -- Clean up any GUI with pattern matching
+            for _, gui in ipairs(playerGui:GetChildren()) do
+                if gui:IsA('ScreenGui') and (gui.Name:match('^Gui_') or gui.Name == 'ZenXGui') then
+                    gui:Destroy()
+                end
             end
         end
     end
     
     -- Load APIs
+    loadPlaceAPI()
+    updateLocation()
     loadKillAura()
     loadMagnet()
     loadAutoFarm()
+    loadChestCollector()
     
     -- Enable Magnet by default (Auto Farm starts disabled)
     if MagnetAPI then
         MagnetAPI.enable()
+    end
+    
+    -- Auto-enable Chest Collector based on PlaceID
+    if ChestAPI then
+        if isWorldOrTower() then
+            -- Enable for world/tower
+            ChestAPI.enable()
+        else
+            -- Disable for dungeon
+            ChestAPI.disable()
+        end
     end
     
     -- Create GUI

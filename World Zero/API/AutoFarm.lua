@@ -37,6 +37,27 @@ if not plr then
     return
 end
 
+-- Trigger floor transitions in towers
+local function existDoor()
+    if Workspace and Workspace:FindFirstChild('Map') then
+        for _, a in ipairs(Workspace.Map:GetChildren()) do
+            -- Touch the BoundingBox to trigger floor transition
+            if a:FindFirstChild('BoundingBox') then 
+                firetouchinterest(plr.Character, a.BoundingBox, 0)
+                wait(.25)
+                firetouchinterest(plr.Character, a.BoundingBox, 1)
+            end
+            
+            -- Clean up visual obstacles
+            pcall(function()
+                if a:FindFirstChild('Model') then a.Model:Destroy() end
+                if a:FindFirstChild('Tiles') then a.Tiles:Destroy() end
+                if a:FindFirstChild('Gate') then a.Gate:Destroy() end
+            end)
+        end
+    end
+end
+
 -- Get player components (character, HRP, etc)
 local function getPlayerParts()
     if not plr.Character then
@@ -157,8 +178,43 @@ local function attackMobs()
     -- This function is a placeholder for future use
 end
 
+-- Get player health percentage
+local function getHealthPercent()
+    -- Prefer server-provided HealthProperties path in Workspace
+    local percent = 100
+    pcall(function()
+        local chars = Workspace:FindFirstChild('Characters')
+        if chars and plr and plr.Name then
+            local myChar = chars:FindFirstChild(plr.Name)
+            if myChar then
+                local hpProps = myChar:FindFirstChild('HealthProperties')
+                if hpProps then
+                    local healthVal = hpProps:FindFirstChild('Health')
+                    local maxHealthVal = hpProps:FindFirstChild('MaxHealth')
+                    if healthVal and maxHealthVal and maxHealthVal.Value > 0 then
+                        percent = (healthVal.Value / maxHealthVal.Value) * 100
+                        return
+                    end
+                end
+            end
+        end
+        -- Fallback to Humanoid if custom path not found
+        local character = plr.Character
+        if character then
+            local humanoid = character:FindFirstChild('Humanoid')
+            if humanoid and humanoid.MaxHealth > 0 then
+                percent = (humanoid.Health / humanoid.MaxHealth) * 100
+            end
+        end
+    end)
+    return percent
+end
+
 -- Fly towards mobs (attack handled by Kill Aura)
 spawn(function()
+    local retreating = false
+    local lastDoorCheck = 0
+    
     while true do
         wait(0.1)
         
@@ -181,12 +237,55 @@ spawn(function()
                     end
                 end
             end)
+            retreating = false
             wait(1)
         else
             pcall(function()
                 noClip()
                 
-                -- Get closest mob (use getMobs to exclude familiar)
+                local healthPercent = getHealthPercent()
+                
+                -- Check if we need to retreat
+                if healthPercent <= 30 and not retreating then
+                    retreating = true
+                end
+                
+                -- If retreating, fly up and wait for HP to recover
+                if retreating then
+                    local character, hrp = getPlayerParts()
+                    if hrp then
+                        -- Fly up 120 studs
+                        local targetPos = hrp.Position + Vector3.new(0, 120, 0)
+                        local bv = hrp:FindFirstChild('BodyVelocity')
+                        if bv then
+                            local direction = (targetPos - hrp.Position).Unit
+                            local distance = (targetPos - hrp.Position).Magnitude
+                            
+                            -- If we're high enough, stop moving
+                            if distance < 10 then
+                                bv.Velocity = Vector3.new(0, 0, 0)
+                            else
+                                bv.Velocity = direction * tweenSpeed
+                            end
+                        end
+                    end
+                    
+                    -- Wait for HP to recover to 93%
+                    if healthPercent >= 93 then
+                        retreating = false
+                    end
+                    
+                    return -- Skip mob targeting while retreating
+                end
+                
+                -- Check for floor transitions every 5 seconds
+                local currentTime = os.clock()
+                if currentTime - lastDoorCheck >= 5 then
+                    existDoor()
+                    lastDoorCheck = currentTime
+                end
+                
+                -- Normal farming behavior
                 local mobs = getMobs()
                 
                 if #mobs > 0 then
@@ -211,6 +310,15 @@ spawn(function()
                     end
                     
                     -- Attack is handled by Kill Aura module
+                else
+                    -- No mobs detected - stay still in air
+                    local character, hrp = getPlayerParts()
+                    if hrp then
+                        local bv = hrp:FindFirstChild('BodyVelocity')
+                        if bv then
+                            bv.Velocity = Vector3.new(0, 0, 0)
+                        end
+                    end
                 end
             end)
         end

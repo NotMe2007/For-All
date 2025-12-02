@@ -66,7 +66,7 @@ local ULTIMATE_COOLDOWN = 35           -- Ultimate ability cooldown
 
 -- Primary hold timing (simulate holding M1 instead of spamming)
 local PRIMARY_HOLD_MIN_INTERVAL = 0.6  -- Minimum interval between held primary triggers
-local PRIMARY_HOLD_MAX_INTERVAL = 0.9  -- Maximum interval between held primary triggers
+local PRIMARY_HOLD_MAX_INTERVAL = 20  -- Maximum interval between held primary triggers
 
 -- Anti-Detection Timing (randomizes behavior to avoid detection)
 local MIN_ATTACK_DELAY = 0.0           -- Minimum delay between attacks (seconds)

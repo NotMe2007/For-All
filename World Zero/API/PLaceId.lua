@@ -85,10 +85,10 @@ local towerId = {
 	-- ===== STANDARD TOWERS =====
 	[5703353651] = 'Prison Tower',
 	[6075085184] = 'Atlantis Tower',
-	[7071564842] = 'Tower 3',
-	[10089770465] = 'Tower 4',
-	[10795158121] = 'Tower 5',
-	[15121292578] = 'Tower 6',
+	[7071564842] = 'Mezuvian Tower',
+	[10089770465] = 'Oasis Tower',
+	[10795158121] = 'Aether Tower',
+	[15121292578] = 'Arcane Tower',
 	
 	-- ===== SPECIAL TOWERS =====
 	[13988110964] = 'Infinite Tower',
