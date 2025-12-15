@@ -136,6 +136,14 @@ local function loadPlaceAPI()
     return PlaceAPI ~= nil
 end
 
+-- Attempt late-load of PlaceAPI if it wasn't available initially
+local function checkAndLoadPlaceAPI()
+    if PlaceAPI == nil and _G.PlaceAPI then
+        PlaceAPI = _G.PlaceAPI
+        updateLocation()
+    end
+end
+
 -- ============================================================================
 -- PLACEID AND LOCATION DETECTION
 -- ============================================================================
@@ -333,17 +341,6 @@ local function tweenColor(obj, newColor, duration)
     return tween
 end
 
-local function tweenTextColor(obj, newColor, duration)
-    local tweenInfo = TweenInfo.new(
-        duration or 0.3,
-        Enum.EasingStyle.Quad,
-        Enum.EasingDirection.InOut
-    )
-    local tween = TweenService:Create(obj, tweenInfo, { TextColor3 = newColor })
-    tween:Play()
-    return tween
-end
-
 -- ============================================================================
 -- CREATE VAPE V4 STYLE GUI
 -- ============================================================================
@@ -506,14 +503,34 @@ local function createVapeGUI()
     local magnetEnabled = true  -- Magnet always enabled by default
     -- Chest collector auto-managed by PlaceID
     
-    -- Display PlaceID and location in title
-    local titleText = 'ZenX'
-    if currentLocation and currentLocation.name then
-        titleText = 'ZenX | ' .. currentLocation.name
-    else
-        titleText = 'ZenX | ID: ' .. tostring(PLACE_ID)
+    -- Function to update title text
+    local function updateTitleText()
+        local newTitle = 'ZenX'
+        if currentLocation and currentLocation.name then
+            newTitle = 'ZenX | ' .. currentLocation.name
+        else
+            newTitle = 'ZenX | ID: ' .. tostring(PLACE_ID)
+        end
+        if titleLabel.Text ~= newTitle then
+            titleLabel.Text = newTitle
+        end
     end
-    titleLabel.Text = titleText
+    
+    -- Set initial title
+    updateTitleText()
+    
+    -- Update title whenever location changes
+    task.spawn(function()
+        local lastLocationCheck = currentLocation
+        while titleLabel.Parent do
+            task.wait(1)
+            checkAndLoadPlaceAPI()
+            if currentLocation ~= lastLocationCheck then
+                updateTitleText()
+                lastLocationCheck = currentLocation
+            end
+        end
+    end)
 
     -- ========================================================================
     -- KILL AURA BUTTON INTERACTIONS
