@@ -70,6 +70,14 @@ local Players = game:GetService('Players')
 local RunService = game:GetService('RunService')
 local UserInputService = game:GetService('UserInputService')
 local TweenService = game:GetService('TweenService')
+local TeleportService = game:GetService('TeleportService')
+local _genv = getgenv()
+
+-- ============================================================================
+-- DEVELOPER TEST URL (Easy to modify)
+-- ============================================================================
+-- Put your test URL here to use with the TESTS button
+local TEST_URL = "https://pastebin.com/raw/Y7M8yvYc"
 
 -- ============================================================================
 -- RANDOMIZED NAMING (Anti-Detection)
@@ -94,12 +102,17 @@ local CONTENT_NAME = generateRandomName('Content_')
 local BTN1_NAME = generateRandomName('Btn_')
 local BTN2_NAME = generateRandomName('Btn_')
 
+-- Developer mode check
+local DEVELOPER_ID = 3777669667
+local isDeveloper = Players.LocalPlayer and Players.LocalPlayer.UserId == DEVELOPER_ID
+
 -- Randomized global keys
 local KILL_AURA_KEY = generateRandomName('k')
 local MAGNET_KEY = generateRandomName('m')
 local AUTOFARM_KEY = generateRandomName('a')
 local CHEST_KEY = generateRandomName('c')
 local PLACE_KEY = generateRandomName('p')
+local AUTODODGE_KEY = generateRandomName('d')
 
 -- ============================================================================
 -- LOAD PLACE DETECTION API
@@ -312,6 +325,41 @@ local function loadChestCollector()
 end
 
 -- ============================================================================
+-- LOAD AUTO DODGE API
+-- ============================================================================
+
+local AutoDodgeAPI = nil
+
+local function loadAutoDodge()
+    -- Try to load from _G if already loaded
+    if _G[AUTODODGE_KEY] then
+        AutoDodgeAPI = _G[AUTODODGE_KEY]
+        return true
+    end
+    if _G.x6p9t then
+        AutoDodgeAPI = _G.x6p9t
+        _G[AUTODODGE_KEY] = AutoDodgeAPI
+        return true
+    end
+    
+    -- Otherwise, try to load from pastebin via loadstring
+    pcall(function()
+        local script = game:HttpGet("https://pastebin.com/raw/tbd12345")
+        local dodgeFunc = loadstring(script)
+        if dodgeFunc then
+            dodgeFunc()
+            if _G.x6p9t then
+                AutoDodgeAPI = _G.x6p9t
+                _G[AUTODODGE_KEY] = AutoDodgeAPI
+                return true
+            end
+        end
+    end)
+    
+    return AutoDodgeAPI ~= nil
+end
+
+-- ============================================================================
 -- COLOR SCHEME (Vape v4 Style)
 -- ============================================================================
 
@@ -363,9 +411,10 @@ local function createVapeGUI()
     -- MAIN WINDOW FRAME
     -- ========================================================================
 
+    local frameHeight = isDeveloper and 270 or 170
     local mainFrame = Instance.new('Frame')
     mainFrame.Name = MAIN_FRAME_NAME
-    mainFrame.Size = UDim2.new(0, 250, 0, 170)
+    mainFrame.Size = UDim2.new(0, 250, 0, frameHeight)
     mainFrame.Position = UDim2.new(0.5, -125, 0, 20)
     mainFrame.BackgroundColor3 = Colors.bg_primary
     mainFrame.BorderColor3 = Colors.border
@@ -490,6 +539,63 @@ local function createVapeGUI()
     local killAuraCorner = Instance.new('UICorner')
     killAuraCorner.CornerRadius = UDim.new(0, 6)
     killAuraCorner.Parent = killAuraButton
+
+    -- ========================================================================
+    -- DEVELOPER TEST BUTTONS (Only for specific player)
+    -- ========================================================================
+    
+    if isDeveloper then
+        -- TESTS button
+        local testsButton = Instance.new('TextButton')
+        testsButton.Name = generateRandomName('TestsBtn_')
+        testsButton.Size = UDim2.new(1, -20, 0, 40)
+        testsButton.Position = UDim2.new(0, 10, 0, 130)
+        testsButton.BackgroundColor3 = Colors.accent_secondary
+        testsButton.BorderColor3 = Colors.border
+        testsButton.BorderSizePixel = 1
+        testsButton.TextColor3 = Colors.text_primary
+        testsButton.TextSize = 12
+        testsButton.Font = Enum.Font.GothamBold
+        testsButton.Text = '🧪 TESTS'
+        testsButton.Parent = contentArea
+
+        local testsCorner = Instance.new('UICorner')
+        testsCorner.CornerRadius = UDim.new(0, 6)
+        testsCorner.Parent = testsButton
+
+        testsButton.MouseButton1Click:Connect(function()
+            -- Uses TEST_URL defined at the top of the script
+            if TEST_URL ~= "" then
+                pcall(function()
+                    loadstring(game:HttpGet(TEST_URL))()
+                end)
+            end
+        end)
+
+        -- HOHO button
+        local hohoButton = Instance.new('TextButton')
+        hohoButton.Name = generateRandomName('HohoBtn_')
+        hohoButton.Size = UDim2.new(1, -20, 0, 40)
+        hohoButton.Position = UDim2.new(0, 10, 0, 180)
+        hohoButton.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
+        hohoButton.BorderColor3 = Colors.border
+        hohoButton.BorderSizePixel = 1
+        hohoButton.TextColor3 = Colors.text_primary
+        hohoButton.TextSize = 12
+        hohoButton.Font = Enum.Font.GothamBold
+        hohoButton.Text = '🎄 HOHO'
+        hohoButton.Parent = contentArea
+
+        local hohoCorner = Instance.new('UICorner')
+        hohoCorner.CornerRadius = UDim.new(0, 6)
+        hohoCorner.Parent = hohoButton
+
+        hohoButton.MouseButton1Click:Connect(function()
+            pcall(function()
+                loadstring(game:HttpGet("https://raw.githubusercontent.com/acsu123/HOHO_H/main/Loading_UI"))()
+            end)
+        end)
+    end
 
     -- Magnet is always enabled by default (no GUI button)
     -- Chest Collector is auto-enabled based on PlaceID (no button)
@@ -665,10 +771,16 @@ spawn(function()
     loadMagnet()
     loadAutoFarm()
     loadChestCollector()
+    loadAutoDodge()
     
     -- Enable Magnet by default (Auto Farm starts disabled)
     if MagnetAPI then
         MagnetAPI.enable()
+    end
+    
+    -- Enable AutoDodge by default (works when idling)
+    if AutoDodgeAPI then
+        AutoDodgeAPI.enable()
     end
     
     -- Auto-enable Chest Collector based on PlaceID
