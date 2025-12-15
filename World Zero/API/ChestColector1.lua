@@ -120,7 +120,7 @@ function ChestAPI.collectAll()
     end)
 end
 
-_G.ChestAPI = ChestAPI
-getgenv().ChestAPI = ChestAPI
+_G.x2m8q = ChestAPI
+getgenv().x2m8q = ChestAPI
 
 return ChestAPI

@@ -15,7 +15,6 @@ if _genv.AutoFarmEnabled == nil then
 end
 if _genv.AutoFarmClass == nil then
     _genv.AutoFarmClass = 'Mage'  -- Default class
-    _genv.AutoFarmClass = 'Archer' -- Ranged
 end
 
 -- Custom wait using Heartbeat
@@ -410,7 +409,7 @@ function AutoFarmAPI.setClass(className)
     _genv.AutoFarmClass = className
 end
 
-_G.AutoFarmAPI = AutoFarmAPI
-getgenv().AutoFarmAPI = AutoFarmAPI
+_G.x4k7p = AutoFarmAPI
+getgenv().x4k7p = AutoFarmAPI
 
 return AutoFarmAPI
