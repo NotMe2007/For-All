@@ -16,6 +16,9 @@ end
 if _genv.AutoFarmClass == nil then
     _genv.AutoFarmClass = 'Mage'  -- Default class
 end
+if _genv.AutoDodgePauseFarm == nil then
+    _genv.AutoDodgePauseFarm = false
+end
 
 -- Custom wait using Heartbeat
 local function wait(sec)
@@ -241,6 +244,12 @@ spawn(function()
         else
             pcall(function()
                 noClip()
+                
+                -- Pause movement if AutoDodge is actively dodging
+                if _genv.AutoDodgePauseFarm then
+                    -- Just skip AutoFarm movement, let AutoDodge move the character freely
+                    return
+                end
                 
                 local healthPercent = getHealthPercent()
                 
