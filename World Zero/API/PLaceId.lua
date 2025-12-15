@@ -78,7 +78,7 @@ local dungeonId = {
 	[14463030678625] = 'Kensai666s Place',
 	[12564586793057] = 'Kraken Cove',
 	[13817936582742] = 'Zero Arena',
-	[13931683347317] = 'Guild Hub'
+	[139316833473171] = 'Guild Hub'
 }
 
 local towerId = {
