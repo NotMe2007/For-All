@@ -277,8 +277,8 @@ end
 -- GLOBAL REGISTRATION
 -- ============================================================================
 
-_G.PlaceAPI = PlaceAPI
-getgenv().PlaceAPI = PlaceAPI
+_G.x5n3d = PlaceAPI
+getgenv().x5n3d = PlaceAPI
 
 -- Store current location on load
 _genv.currentPlace = PlaceAPI.getCurrent()

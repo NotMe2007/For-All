@@ -113,8 +113,8 @@ local function loadPlaceAPI()
         PlaceAPI = _G[PLACE_KEY]
         return true
     end
-    if _G.PlaceAPI then
-        PlaceAPI = _G.PlaceAPI
+    if _G.x5n3d then
+        PlaceAPI = _G.x5n3d
         _G[PLACE_KEY] = PlaceAPI
         return true
     end
@@ -125,8 +125,8 @@ local function loadPlaceAPI()
         local placeFunc = loadstring(script)
         if placeFunc then
             placeFunc()
-            if _G.PlaceAPI then
-                PlaceAPI = _G.PlaceAPI
+            if _G.x5n3d then
+                PlaceAPI = _G.x5n3d
                 _G[PLACE_KEY] = PlaceAPI
                 return true
             end
@@ -138,8 +138,8 @@ end
 
 -- Attempt late-load of PlaceAPI if it wasn't available initially
 local function checkAndLoadPlaceAPI()
-    if PlaceAPI == nil and _G.PlaceAPI then
-        PlaceAPI = _G.PlaceAPI
+    if PlaceAPI == nil and _G.x5n3d then
+        PlaceAPI = _G.x5n3d
         updateLocation()
     end
 end
@@ -253,8 +253,8 @@ local function loadAutoFarm()
         AutoFarmAPI = _G[AUTOFARM_KEY]
         return true
     end
-    if _G.AutoFarmAPI then
-        AutoFarmAPI = _G.AutoFarmAPI
+    if _G.x4k7p then
+        AutoFarmAPI = _G.x4k7p
         _G[AUTOFARM_KEY] = AutoFarmAPI
         return true
     end
@@ -265,8 +265,8 @@ local function loadAutoFarm()
         local autoFarmFunc = loadstring(script)
         if autoFarmFunc then
             autoFarmFunc()
-            if _G.AutoFarmAPI then
-                AutoFarmAPI = _G.AutoFarmAPI
+            if _G.x4k7p then
+                AutoFarmAPI = _G.x4k7p
                 _G[AUTOFARM_KEY] = AutoFarmAPI
                 return true
             end
@@ -288,8 +288,8 @@ local function loadChestCollector()
         ChestAPI = _G[CHEST_KEY]
         return true
     end
-    if _G.ChestAPI then
-        ChestAPI = _G.ChestAPI
+    if _G.x2m8q then
+        ChestAPI = _G.x2m8q
         _G[CHEST_KEY] = ChestAPI
         return true
     end
@@ -300,8 +300,8 @@ local function loadChestCollector()
         local chestFunc = loadstring(script)
         if chestFunc then
             chestFunc()
-            if _G.ChestAPI then
-                ChestAPI = _G.ChestAPI
+            if _G.x2m8q then
+                ChestAPI = _G.x2m8q
                 _G[CHEST_KEY] = ChestAPI
                 return true
             end
