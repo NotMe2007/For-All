@@ -2,6 +2,7 @@
 -- Automatically progresses through floors by triggering mission gates and spawns
 -- Waits for mobs to be cleared before moving to next floor
 -- https://pastebin.com/79pjMFtr
+-- this script is incomplete and may not work as intended
 
 local Players = game:GetService('Players')
 local Workspace = game:GetService('Workspace')
