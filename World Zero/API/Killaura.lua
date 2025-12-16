@@ -5,7 +5,7 @@
 -- This module exports the Kill Aura API for use with external GUI systems.
 -- Use via: _G.killAura:start(), _G.killAura:stop(), _G.killAura:toggle()
 -- ============================================================================
-
+-- this script is incomplete and may not work as intended
 -- SERVICES
 local Players = game:GetService('Players')
 local ReplicatedStorage = game:GetService('ReplicatedStorage')

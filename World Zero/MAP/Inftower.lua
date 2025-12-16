@@ -1,6 +1,7 @@
 -- Infinite Tower Auto Floor Progression
 -- Automatically moves to next floor when all mobs are cleared
 -- loadstring(game:HttpGet("https://pastebin.com/6f9cH4ta"))()
+-- this script is incomplete and may not work as intended
 
 local Players = game:GetService('Players')
 local Workspace = game:GetService('Workspace')

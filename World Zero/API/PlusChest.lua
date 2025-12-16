@@ -2,6 +2,7 @@
 -- Gamepass ID 8136250: 1-Item Drop
 -- Uses safer method to avoid executor detection
 -- https://pastebin.com/raw/44W7VMPv
+-- this script is incomplete and may not work as intended
 
 local Players = game:GetService('Players')
 

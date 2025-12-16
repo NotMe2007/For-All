@@ -1,6 +1,7 @@
 -- Chest Collection - Auto-collects chests from Tower and world events
 -- Handles chest teleportation only
 -- https://pastebin.com/raw/9282RzYC
+-- this script is incomplete and may not work as intended
 
 local Players = game:GetService('Players')
 local Workspace = game:GetService('Workspace')
