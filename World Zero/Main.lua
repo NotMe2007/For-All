@@ -121,6 +121,7 @@ local AUTOFARM_KEY = generateRandomName('a')
 local CHEST_KEY = generateRandomName('c')
 local PLACE_KEY = generateRandomName('p')
 local AUTODODGE_KEY = generateRandomName('d')
+local INFTOWER_KEY = generateRandomName('t')
 
 -- ============================================================================
 -- LOAD PLACE DETECTION API
@@ -368,6 +369,41 @@ local function loadAutoDodge()
 end
 
 -- ============================================================================
+-- LOAD INFINITE TOWER API
+-- ============================================================================
+
+local InfTowerAPI = nil
+
+local function loadInfTower()
+    -- Try to load from _G if already loaded
+    if _G[INFTOWER_KEY] then
+        InfTowerAPI = _G[INFTOWER_KEY]
+        return true
+    end
+    if _G.InfTowerAPI then
+        InfTowerAPI = _G.InfTowerAPI
+        _G[INFTOWER_KEY] = InfTowerAPI
+        return true
+    end
+    
+    -- Otherwise, try to load from pastebin via loadstring
+    pcall(function()
+        local script = game:HttpGet("https://pastebin.com/raw/6f9cH4ta")
+        local infTowerFunc = loadstring(script)
+        if infTowerFunc then
+            infTowerFunc()
+            if _G.InfTowerAPI then
+                InfTowerAPI = _G.InfTowerAPI
+                _G[INFTOWER_KEY] = InfTowerAPI
+                return true
+            end
+        end
+    end)
+    
+    return InfTowerAPI ~= nil
+end
+
+-- ============================================================================
 -- COLOR SCHEME (Vape v4 Style)
 -- ============================================================================
 
@@ -419,7 +455,7 @@ local function createVapeGUI()
     -- MAIN WINDOW FRAME
     -- ========================================================================
 
-    local frameHeight = isDeveloper and 270 or 170
+    local frameHeight = isDeveloper and 320 or 170
     local mainFrame = Instance.new('Frame')
     mainFrame.Name = MAIN_FRAME_NAME
     mainFrame.Size = UDim2.new(0, 250, 0, frameHeight)
@@ -603,6 +639,30 @@ local function createVapeGUI()
                 loadstring(game:HttpGet("https://raw.githubusercontent.com/acsu123/HOHO_H/main/Loading_UI"))()
             end)
         end)
+
+        -- DEX button
+        local dexButton = Instance.new('TextButton')
+        dexButton.Name = generateRandomName('DexBtn_')
+        dexButton.Size = UDim2.new(1, -20, 0, 40)
+        dexButton.Position = UDim2.new(0, 10, 0, 230)
+        dexButton.BackgroundColor3 = Color3.fromRGB(120, 120, 255)
+        dexButton.BorderColor3 = Colors.border
+        dexButton.BorderSizePixel = 1
+        dexButton.TextColor3 = Colors.text_primary
+        dexButton.TextSize = 12
+        dexButton.Font = Enum.Font.GothamBold
+        dexButton.Text = '🧰 DEX'
+        dexButton.Parent = contentArea
+
+        local dexCorner = Instance.new('UICorner')
+        dexCorner.CornerRadius = UDim.new(0, 6)
+        dexCorner.Parent = dexButton
+
+        dexButton.MouseButton1Click:Connect(function()
+            pcall(function()
+                loadstring(game:HttpGet("https://github.com/AZYsGithub/DexPlusPlus/releases/latest/download/out.lua"))()
+            end)
+        end)
     end
 
     -- Magnet is always enabled by default (no GUI button)
@@ -743,25 +803,67 @@ end
 spawn(function()
     wait(1)
     
-    -- Cleanup: Disable Kill Aura if running and remove old GUI
-    if KillAuraAPI and KillAuraAPI.running then
-        KillAuraAPI:stop()
-    end
+    -- ========================================================================
+    -- THOROUGH CLEANUP: Disable all APIs from any previous execution
+    -- ========================================================================
     
-    -- Cleanup: Disable Magnet if running
-    if MagnetAPI then
-        MagnetAPI.disable()
-    end
+    -- Check all possible sources for Kill Aura API and disable
+    pcall(function()
+        local killAura = KillAuraAPI or _G[KILL_AURA_KEY] or _G.x9m1n or getgenv().x9m1n
+        if killAura then
+            if killAura.running then killAura:stop() end
+            if killAura.disable then killAura.disable() end
+        end
+    end)
     
-    -- Cleanup: Disable Auto Farm if running
-    if AutoFarmAPI then
-        AutoFarmAPI.disable()
-    end
+    -- Check all possible sources for Magnet API and disable
+    pcall(function()
+        local magnet = MagnetAPI or _G[MAGNET_KEY] or _G.x7d2k or getgenv().x7d2k
+        if magnet then
+            if magnet.disable then magnet.disable() end
+        end
+    end)
     
-    -- Cleanup: Disable AutoDodge if running
-    if AutoDodgeAPI then
-        pcall(function() AutoDodgeAPI.disable() end)
-    end
+    -- Check all possible sources for Auto Farm API and disable
+    pcall(function()
+        local autoFarm = AutoFarmAPI or _G[AUTOFARM_KEY] or _G.x4k7p or getgenv().x4k7p
+        if autoFarm then
+            if autoFarm.disable then autoFarm.disable() end
+        end
+    end)
+    
+    -- Check all possible sources for Chest API and disable
+    pcall(function()
+        local chest = ChestAPI or _G[CHEST_KEY] or _G.x2m8q or getgenv().x2m8q
+        if chest then
+            if chest.disable then chest.disable() end
+        end
+    end)
+    
+    -- Check all possible sources for AutoDodge API and disable
+    pcall(function()
+        local autoDodge = AutoDodgeAPI or _G[AUTODODGE_KEY] or _G.x6p9t or getgenv().x6p9t
+        if autoDodge then
+            if autoDodge.disable then autoDodge.disable() end
+        end
+    end)
+    
+    -- Check all possible sources for InfTower API and disable
+    pcall(function()
+        local infTower = InfTowerAPI or _G[INFTOWER_KEY] or _G.InfTowerAPI or getgenv().InfTowerAPI
+        if infTower then
+            if infTower.disable then infTower.disable() end
+        end
+    end)
+    
+    -- Also disable via getgenv flags to be extra thorough
+    pcall(function()
+        if getgenv().AutoFarmEnabled then getgenv().AutoFarmEnabled = false end
+        if getgenv().MagnetEnabled then getgenv().MagnetEnabled = false end
+        if getgenv().ChestCollectorEnabled then getgenv().ChestCollectorEnabled = false end
+        if getgenv().AutoDodgeEnabled then getgenv().AutoDodgeEnabled = false end
+        if getgenv().InfTowerEnabled then getgenv().InfTowerEnabled = false end
+    end)
     
     -- Remove old GUI if exists
     local plr = Players.LocalPlayer
@@ -777,19 +879,35 @@ spawn(function()
         end
     end
     
-    -- Force reload: Clear all API global references
+    -- Wait for cleanup to complete
+    wait(0.5)
+    
+    -- Force reload: Clear all API global references thoroughly
     _G.x9m1n = nil  -- KillAura
     _G.x7d2k = nil  -- Magnet
     _G.x4k7p = nil  -- AutoFarm
     _G.x2m8q = nil  -- Chest
     _G.x5n3d = nil  -- PlaceAPI
     _G.x6p9t = nil  -- AutoDodge
+    _G.InfTowerAPI = nil  -- InfTower
     getgenv().x9m1n = nil
     getgenv().x7d2k = nil
     getgenv().x4k7p = nil
     getgenv().x2m8q = nil
     getgenv().x5n3d = nil
     getgenv().x6p9t = nil
+    getgenv().InfTowerAPI = nil
+    
+    -- Clear randomized keys if they were set from a previous run
+    pcall(function()
+        if _G[KILL_AURA_KEY] then _G[KILL_AURA_KEY] = nil end
+        if _G[MAGNET_KEY] then _G[MAGNET_KEY] = nil end
+        if _G[AUTOFARM_KEY] then _G[AUTOFARM_KEY] = nil end
+        if _G[CHEST_KEY] then _G[CHEST_KEY] = nil end
+        if _G[PLACE_KEY] then _G[PLACE_KEY] = nil end
+        if _G[AUTODODGE_KEY] then _G[AUTODODGE_KEY] = nil end
+        if _G[INFTOWER_KEY] then _G[INFTOWER_KEY] = nil end
+    end)
     
     -- Reset local API references
     KillAuraAPI = nil
@@ -798,6 +916,7 @@ spawn(function()
     ChestAPI = nil
     PlaceAPI = nil
     AutoDodgeAPI = nil
+    InfTowerAPI = nil
     
     -- Load APIs
     loadPlaceAPI()
@@ -807,6 +926,7 @@ spawn(function()
     loadAutoFarm()
     loadChestCollector()
     loadAutoDodge()
+    loadInfTower()
     
     -- Enable Magnet by default (Auto Farm starts disabled)
     if MagnetAPI then
@@ -816,6 +936,11 @@ spawn(function()
     -- Enable AutoDodge by default (works when idling)
     if AutoDodgeAPI then
         AutoDodgeAPI.enable()
+    end
+    
+    -- Enable InfTower by default (auto progression)
+    if InfTowerAPI then
+        InfTowerAPI.enable()
     end
     
     -- Auto-enable Chest Collector based on PlaceID
