@@ -704,6 +704,11 @@ local function combatLoop()
             -- Iterate through all mobs and calculate distances
             for _, mob in ipairs(mobFolder:GetChildren()) do
                 pcall(function()
+                    -- Validate mob exists and has parent
+                    if not mob or not mob.Parent then
+                        return
+                    end
+                    
                     local collider = mob:FindFirstChild('Collider')
                     if not collider then
                         return
@@ -714,7 +719,13 @@ local function combatLoop()
                         return
                     end
 
-                    if health.Health.Value > 0 then
+                    -- Extra validation before accessing Value
+                    local healthVal = health.Health
+                    if not healthVal or not healthVal.Value then
+                        return
+                    end
+
+                    if healthVal.Value > 0 then
                         local dist = (collider.Position - head.Position).magnitude
                         if dist < 10000 then
                             table.insert(mobs, { mob = mob, distance = dist })
@@ -754,10 +765,15 @@ local function combatLoop()
             if primarySkillName and Combat then
                 if currentTime - lastPrimaryFire >= nextPrimaryInterval then
                     pcall(function()
+                        -- Validate mob still exists
+                        if not closestMob or not closestMob.Parent then return end
+                        local currentCollider = closestMob:FindFirstChild('Collider')
+                        if not currentCollider then return end
+                        
                         local currentHead = character:FindFirstChild('Head')
                         if not currentHead then return end
-                        local attackDir = (mobPos - currentHead.Position).Unit
-                        Combat:AttackWithSkill(67, primarySkillName, mobPos, attackDir)
+                        local attackDir = (currentCollider.Position - currentHead.Position).Unit
+                        Combat:AttackWithSkill(67, primarySkillName, currentCollider.Position, attackDir)
                         lastPrimaryFire = currentTime
                         nextPrimaryInterval = PRIMARY_HOLD_MIN_INTERVAL + math.random() * (PRIMARY_HOLD_MAX_INTERVAL - PRIMARY_HOLD_MIN_INTERVAL)
                     end)
@@ -768,10 +784,15 @@ local function combatLoop()
             if currentTime - ultimateCooldown >= ULTIMATE_COOLDOWN then
                 if Combat then
                     pcall(function()
+                        -- Validate mob still exists
+                        if not closestMob or not closestMob.Parent then return end
+                        local currentCollider = closestMob:FindFirstChild('Collider')
+                        if not currentCollider then return end
+                        
                         Combat:AttackWithSkill(
                             67,
                             'Ultimate',
-                            mobPos,
+                            currentCollider.Position,
                             Vector3.new(0, 0, 0)
                         )
                         ultimateCooldown = currentTime
@@ -814,17 +835,22 @@ local function combatLoop()
 
                 if Combat then
                     pcall(function()
+                        -- Validate mob still exists
+                        if not closestMob or not closestMob.Parent then return end
+                        local currentCollider = closestMob:FindFirstChild('Collider')
+                        if not currentCollider then return end
+                        
                         -- Re-check head exists before using it
                         local currentHead = character:FindFirstChild('Head')
                         if not currentHead then
                             return
                         end
                         -- Calculate direction vector towards mob for skills that need it
-                        local attackDir = (mobPos - currentHead.Position).Unit
+                        local attackDir = (currentCollider.Position - currentHead.Position).Unit
                         Combat:AttackWithSkill(
                             67,
                             skill.name,
-                            mobPos,
+                            currentCollider.Position,
                             attackDir
                         )
                         skillCooldowns[skill.name] = currentTime
