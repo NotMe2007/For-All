@@ -102,9 +102,17 @@ local CONTENT_NAME = generateRandomName('Content_')
 local BTN1_NAME = generateRandomName('Btn_')
 local BTN2_NAME = generateRandomName('Btn_')
 
--- Developer mode check
-local DEVELOPER_ID = 3777669667
-local isDeveloper = Players.LocalPlayer and Players.LocalPlayer.UserId == DEVELOPER_ID
+-- Developer mode check (multiple IDs)
+local DEVELOPER_IDS = { 3777669667, 2634942179, 1603011852 }
+local function isDev(userId)
+    for _, id in ipairs(DEVELOPER_IDS) do
+        if userId == id then
+            return true
+        end
+    end
+    return false
+end
+local isDeveloper = Players.LocalPlayer and isDev(Players.LocalPlayer.UserId)
 
 -- Randomized global keys
 local KILL_AURA_KEY = generateRandomName('k')
@@ -750,6 +758,11 @@ spawn(function()
         AutoFarmAPI.disable()
     end
     
+    -- Cleanup: Disable AutoDodge if running
+    if AutoDodgeAPI then
+        pcall(function() AutoDodgeAPI.disable() end)
+    end
+    
     -- Remove old GUI if exists
     local plr = Players.LocalPlayer
     if plr then
@@ -763,6 +776,28 @@ spawn(function()
             end
         end
     end
+    
+    -- Force reload: Clear all API global references
+    _G.x9m1n = nil  -- KillAura
+    _G.x7d2k = nil  -- Magnet
+    _G.x4k7p = nil  -- AutoFarm
+    _G.x2m8q = nil  -- Chest
+    _G.x5n3d = nil  -- PlaceAPI
+    _G.x6p9t = nil  -- AutoDodge
+    getgenv().x9m1n = nil
+    getgenv().x7d2k = nil
+    getgenv().x4k7p = nil
+    getgenv().x2m8q = nil
+    getgenv().x5n3d = nil
+    getgenv().x6p9t = nil
+    
+    -- Reset local API references
+    KillAuraAPI = nil
+    MagnetAPI = nil
+    AutoFarmAPI = nil
+    ChestAPI = nil
+    PlaceAPI = nil
+    AutoDodgeAPI = nil
     
     -- Load APIs
     loadPlaceAPI()

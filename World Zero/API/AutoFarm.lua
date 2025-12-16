@@ -262,15 +262,17 @@ spawn(function()
                 if retreating then
                     local character, hrp = getPlayerParts()
                     if hrp then
-                        -- Fly up 120 studs
-                        local targetPos = hrp.Position + Vector3.new(0, 120, 0)
+                        -- Fly up 30% of current height
+                        local currentHeight = hrp.Position.Y
+                        local targetHeight = currentHeight * 1.3
+                        local targetPos = Vector3.new(hrp.Position.X, targetHeight, hrp.Position.Z)
                         local bv = hrp:FindFirstChild('BodyVelocity')
                         if bv then
                             local direction = (targetPos - hrp.Position).Unit
                             local distance = (targetPos - hrp.Position).Magnitude
                             
                             -- If we're high enough, stop moving
-                            if distance < 10 then
+                            if distance < 5 then
                                 bv.Velocity = Vector3.new(0, 0, 0)
                             else
                                 bv.Velocity = direction * tweenSpeed
@@ -297,24 +299,104 @@ spawn(function()
                 local mobs = getMobs()
                 
                 if #mobs > 0 then
-                    -- Find closest mob
                     local character, hrp = getPlayerParts()
                     if not hrp then return end
                     
-                    local closest = mobs[1]
-                    local closestDist = (closest.Collider.Position - hrp.Position).Magnitude
-                    
+                    -- Filter to only nearby mobs (within 80 studs)
+                    local nearbyMobs = {}
                     for _, mob in ipairs(mobs) do
-                        local dist = (mob.Collider.Position - hrp.Position).Magnitude
-                        if dist < closestDist then
-                            closest = mob
-                            closestDist = dist
+                        if mob and mob:FindFirstChild('Collider') then
+                            local dist = (mob.Collider.Position - hrp.Position).Magnitude
+                            if dist < 80 then
+                                table.insert(nearbyMobs, mob)
+                            end
                         end
                     end
                     
-                    -- Fly above the mob
-                    if closest and closest:FindFirstChild('Collider') then
-                        moveTo(closest.Collider, 0, 20, 0)
+                    -- If no nearby mobs, move to the closest one
+                    if #nearbyMobs == 0 then
+                        local closest = mobs[1]
+                        local closestDist = (closest.Collider.Position - hrp.Position).Magnitude
+                        
+                        for _, mob in ipairs(mobs) do
+                            local dist = (mob.Collider.Position - hrp.Position).Magnitude
+                            if dist < closestDist then
+                                closest = mob
+                                closestDist = dist
+                            end
+                        end
+                        
+                        if closest and closest:FindFirstChild('Collider') then
+                            local targetPos = closest.Collider.Position + Vector3.new(0, 5, 0)
+                            local bv = hrp:FindFirstChild('BodyVelocity')
+                            if bv then
+                                local direction = (targetPos - hrp.Position).Unit
+                                bv.Velocity = direction * tweenSpeed
+                            end
+                        end
+                        return
+                    end
+                    
+                    -- Calculate center of nearby mobs only
+                    local centerPos = Vector3.new(0, 0, 0)
+                    for _, mob in ipairs(nearbyMobs) do
+                        if mob and mob:FindFirstChild('Collider') then
+                            centerPos = centerPos + mob.Collider.Position
+                        end
+                    end
+                    centerPos = centerPos / #nearbyMobs
+                    
+                    -- Find the mob furthest from center (on the outside of nearby group)
+                    local targetMob = nil
+                    local maxDistFromCenter = 0
+                    
+                    for _, mob in ipairs(nearbyMobs) do
+                        if mob and mob:FindFirstChild('Collider') then
+                            local distFromCenter = (mob.Collider.Position - centerPos).Magnitude
+                            if distFromCenter > maxDistFromCenter then
+                                maxDistFromCenter = distFromCenter
+                                targetMob = mob
+                            end
+                        end
+                    end
+                    
+                    -- Position behind the outermost mob
+                    if targetMob and targetMob:FindFirstChild('Collider') then
+                        local mobPos = targetMob.Collider.Position
+                        
+                        -- Calculate direction away from center
+                        local awayFromCenter = (mobPos - centerPos).Unit
+                        
+                        -- Position 25 studs behind the mob (away from center)
+                        -- Lock height to prevent up/down movement
+                        local targetY = mobPos.Y + 5
+                        local horizontalOffset = awayFromCenter * 25
+                        local targetPos = Vector3.new(
+                            mobPos.X + horizontalOffset.X,
+                            targetY,
+                            mobPos.Z + horizontalOffset.Z
+                        )
+                        
+                        -- Move smoothly to position without constant tweening
+                        local bv = hrp:FindFirstChild('BodyVelocity')
+                        if bv then
+                            local currentPos = hrp.Position
+                            local horizontalDist = math.sqrt(
+                                (targetPos.X - currentPos.X)^2 + 
+                                (targetPos.Z - currentPos.Z)^2
+                            )
+                            local verticalDist = math.abs(targetPos.Y - currentPos.Y)
+                            
+                            -- Only move horizontally if we're more than 4 studs away
+                            -- Only adjust height if we're more than 2 studs off
+                            if horizontalDist > 4 or verticalDist > 2 then
+                                local direction = (targetPos - currentPos).Unit
+                                bv.Velocity = direction * tweenSpeed
+                            else
+                                -- Hold position - stop all movement
+                                bv.Velocity = Vector3.new(0, 0, 0)
+                            end
+                        end
                     end
                     
                     -- Attack is handled by Kill Aura module
