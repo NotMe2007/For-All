@@ -64,14 +64,14 @@ local PRIMARY_DEFAULT_COOLDOWN = 0.0   -- Primary attack cooldown (fast attacks)
 local DEFAULT_SKILL_COOLDOWN = 4       -- Regular skill cooldown
 local ULTIMATE_COOLDOWN = 35           -- Ultimate ability cooldown
 
--- Primary hold timing (simulate holding M1 instead of spamming)
-local PRIMARY_HOLD_MIN_INTERVAL = 0.6  -- Minimum interval between held primary triggers
-local PRIMARY_HOLD_MAX_INTERVAL = 20  -- Maximum interval between held primary triggers
+-- Primary holdk timing (simulate holding M1 instead of spamming)
+local PRIMARY_HOLD_MIN_INTERVAL = 0.2  -- Minimum interval between held primary triggers
+local PRIMARY_HOLD_MAX_INTERVAL = 0.25  -- Maximum interval between held primary triggers
 
 -- Anti-Detection Timing (randomizes behavior to avoid detection)
 local MIN_ATTACK_DELAY = 0.0           -- Minimum delay between attacks (seconds)
-local MAX_ATTACK_DELAY = 0.4           -- Maximum delay between attacks (seconds)
-local PAUSE_CHANCE = 0.05              -- 5% chance to pause for 1-3 seconds between attacks
+local MAX_ATTACK_DELAY = 0.1           -- Maximum delay between attacks (seconds)
+local PAUSE_CHANCE = 0.03              -- 3% chance to pause for 1-3 seconds between attacks
 local SKILL_SWITCH_INTERVAL = 30       -- Switch attack pattern every 30 seconds
 
 -- ============================================================================
@@ -386,6 +386,7 @@ local CustomCooldowns = {
 
     },
     Archer = {
+        Archer = 0.39,
         SpiritBomb = 10,
         MortarStrike1 = 12,
         PiercingArrow1 = 5,
@@ -662,8 +663,14 @@ local function combatLoop()
             end
 
             -- Simulate holding primary attack (not spamming)
+            -- Use custom cooldown if defined, otherwise use default interval
+            local primaryCooldown = PRIMARY_HOLD_MIN_INTERVAL
+            if CustomCooldowns[className] and primarySkillName and CustomCooldowns[className][primarySkillName] then
+                primaryCooldown = CustomCooldowns[className][primarySkillName]
+            end
+            
             if primarySkillName and Combat then
-                if currentTime - lastPrimaryFire >= nextPrimaryInterval then
+                if currentTime - lastPrimaryFire >= primaryCooldown then
                     pcall(function()
                         -- Validate mob still exists
                         if not closestMob or not closestMob.Parent then return end
@@ -675,7 +682,6 @@ local function combatLoop()
                         local attackDir = (currentCollider.Position - currentHead.Position).Unit
                         Combat:AttackWithSkill(67, primarySkillName, currentCollider.Position, attackDir)
                         lastPrimaryFire = currentTime
-                        nextPrimaryInterval = PRIMARY_HOLD_MIN_INTERVAL + math.random() * (PRIMARY_HOLD_MAX_INTERVAL - PRIMARY_HOLD_MIN_INTERVAL)
                     end)
                 end
             end
@@ -775,7 +781,7 @@ local function combatLoop()
                 end
             else
                 -- All skills on cooldown, wait a bit
-                wait(0.5 + math.random() * 0.5)
+                wait(0.05 + math.random() * 0.05)
             end
         end)
     end
