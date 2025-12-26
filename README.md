@@ -1,10 +1,13 @@
 # For-All
 
-Load the main script:
+Load the main script no key:
 ```lua
 loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/main/PB%20WZ/Main.lua"))()
 ```
-
+Load the main script key
+```lua
+--
+```
 ## 🚀 Supported game
 - World Zero
 
