@@ -6,7 +6,7 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/mai
 ```
 Load the main script key
 ```lua
---
+loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/refs/heads/main/PB%20WZ/Mainwithkey.lua"))()
 ```
 ## 🚀 Supported game
 - World Zero
