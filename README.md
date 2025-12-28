@@ -8,6 +8,8 @@ loadstring(game:HttpGet("https://api.junkie-development.de/api/v1/luascripts/pub
 ## 🚀 Supported game
 - World Zero
 
-## 😎 Upcoming
+### 😎 Upcoming
 - Ultra Unfair
 - Creatures of Senaria
+
+`Based on Prometheus by Elias Oelschner, https://github.com/prometheus-lua/Prometheus`
