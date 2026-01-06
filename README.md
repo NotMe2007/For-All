@@ -14,7 +14,11 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/mai
 
 ### 😎 Upcoming
 
+- Soul Eater: Resonance
 - Creatures of Senaria
 - Flashpoint
+- Death Train
+- Shindo Life
+- Monster Slayer
 
 `Based on Prometheus by Elias Oelschner, https://github.com/prometheus-lua/Prometheus`
