@@ -14,5 +14,6 @@ loadstring(game:HttpGet("https://api.junkie-development.de/api/v1/luascripts/pub
 
 - Ultra Unfair
 - Creatures of Senaria
+- Flashpoint
 
 `Based on Prometheus by Elias Oelschner, https://github.com/prometheus-lua/Prometheus`
