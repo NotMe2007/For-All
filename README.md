@@ -17,7 +17,7 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/mai
 ## 🚀 Farm A Fish
 
 ```lua
-loadstring(game:HttpGet("placeholder"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/refs/heads/main/Random%20Scripts/FarmAFish.lua"))()
 ```
 
 ### 😎 Upcoming
