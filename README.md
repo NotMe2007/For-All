@@ -20,11 +20,56 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/mai
 -- ═══════════════════════════════════════════════════════════════════════════
 -- _G.FAF_SETTINGS - PUBLIC SETTINGS (Set BEFORE running script or modify anytime)
 -- Users can share these settings easily by copying/pasting this table
--- Pre-set your settings BEFORE the loadstring, they will be preserved!
+-- Pre-set your settings BEFORE the loadstring, they will be saved yey
 -- ═══════════════════════════════════════════════════════════════════════════
 
 -- Initialize table if not exists (preserves user settings from loadstring)
 _G.FAF_SETTINGS = _G.FAF_SETTINGS or {}
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- _G.FAF_TOGGLES - EXTERNAL FEATURE TOGGLES (Anti-detection friendly)
+-- Set these BEFORE or AFTER running script to enable/disable features externally
+-- All toggles are checked in real-time by their respective modules
+-- ═══════════════════════════════════════════════════════════════════════════
+
+_G.FAF_TOGGLES = _G.FAF_TOGGLES or {}
+
+-- Default toggle states (only applied if not already set)
+local FAF_TOGGLE_DEFAULTS = {
+    -- ═══════════════════════════════════════════════════════════════
+    -- MASTER TOGGLES - Control all features externally
+    -- Set any of these to false to instantly disable that module
+    -- ═══════════════════════════════════════════════════════════════
+    
+    AutoCollectFish = true,     -- Auto collect fish from nets
+    AutoSellFish = true,        -- Auto sell fish
+    AutoBuyBait = true,         -- Auto buy bait from shop
+    AutoPlaceBait = false,       -- Auto place bait
+    AutoOpenBaitPacks = true,   -- Auto open bait packs
+    SmartBaitManagement = false, -- Smart bait optimization
+    AutoCollectCrates = false,   -- Auto collect crates
+    AutoCollectPickups = true,  -- Auto collect pickups
+    EventAutoFeed = true,       -- Auto feed event NPCs
+    AntiStaff = true,           -- Anti-staff protection
+    AntiAFK = true,             -- Anti-AFK protection
+    AutoFeedPets = true,        -- Auto feed pets
+    AutoBestPet = true,         -- Auto swap to best pets
+    AutoEggs = true,            -- Auto egg management
+    AutoUseGear = false,         -- Auto use gear
+    AutoCraft = false,           -- Auto crafting system
+    
+    -- ═══════════════════════════════════════════════════════════════
+    -- SECURITY - GUI Name Randomization
+    -- ═══════════════════════════════════════════════════════════════
+    RandomizeGUIName = true,    -- Randomize GUI name to avoid detection
+}
+
+-- Apply toggle defaults only for toggles not already defined by user
+for key, defaultValue in pairs(FAF_TOGGLE_DEFAULTS) do
+    if _G.FAF_TOGGLES[key] == nil then
+        _G.FAF_TOGGLES[key] = defaultValue
+    end
+end
 
 -- Default settings (only applied if user hasn't set them)
 local FAF_DEFAULTS = {
@@ -34,14 +79,18 @@ local FAF_DEFAULTS = {
     -- ═══════════════════════════════════════════════════════════════
     
     -- Only pickup fish with THESE mutations (leave empty {} to pickup all)
+    -- Special option: {"All"} will pickup ALL mutations but still respect exclude filter
     -- Available mutations:
+    --   "All" (special: keeps all but still checks exclude filter)
     --   "Golden", "Diamond", "Void", "Rainbow", "Albino", "Colossal",
     --   "Tiny", "Electric", "Frozen", "Fiery", "Spectral", "Cosmic",
     --   "Christmas", "Alien"
     -- Example: {"Golden", "Diamond"} will ONLY pickup Golden/Diamond fish
+    -- Example: {"All"} will pickup all fish, but exclude filter still applies
     AutoPickupOnlyMutations = {},
     
-    -- EXCLUDE fish with these mutations from pickup (ignored if AutoPickupOnlyMutations is set)
+    -- EXCLUDE fish with these mutations from pickup
+    -- This filter is ALWAYS checked, even when AutoPickupOnlyMutations = {"All"}
     -- Available mutations:
     --   "Golden", "Diamond", "Void", "Rainbow", "Albino", "Colossal",
     --   "Tiny", "Electric", "Frozen", "Fiery", "Spectral", "Cosmic",
@@ -110,7 +159,14 @@ local FAF_DEFAULTS = {
     ProtectCraftMaterials = true,
 }
 
-loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/refs/heads/main/Random%20Scripts/FarmAFish.lua"))()
+-- Apply defaults only for settings not already defined by user
+for key, defaultValue in pairs(FAF_DEFAULTS) do
+    if _G.FAF_SETTINGS[key] == nil then
+        _G.FAF_SETTINGS[key] = defaultValue
+    end
+end
+
+loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/main/Random%20Scripts/FarmAFish.lua"))()
 ```
 
 ### 😎 Upcoming
