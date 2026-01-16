@@ -6,8 +6,9 @@
 	
 	Dex++ is a revival of Moon's Dex, made to fulfill Moon's Dex prophecy.
 
-	Modded by ZenX Studio for Farm a Fish
-	dex version: 2.2.2
+	Universal Edition - For All Games
+	Modded by ZenX Studio
+	dex version: 2.3.0
 ]]
 
 local selection
@@ -15402,18 +15403,33 @@ Main.Init()
 --for i,v in pairs(Main.MissingEnv) do print(i,v) end
 
 -- ========================================
--- Farm a Fish Decompiler - ZenX Studio Edition
+-- Universal Game Decompiler - ZenX Studio Edition
 -- ========================================
 
-getgenv().FAFDecompiler = {}
-local FAF = getgenv().FAFDecompiler
+getgenv().GameDecompiler = {}
+local GD = getgenv().GameDecompiler
+
+-- Auto-detect game name
+local function getGameName()
+	local placeId = game.PlaceId
+	local gameNames = {
+		-- Add known game PlaceIds here
+		[16302235259] = "FarmAFish",
+		[14308554246] = "WorldZero",
+		[102858117] = "UltraUnfair",
+		[8737602449] = "PetSim99",
+		[12884920787] = "Descent",
+	}
+	return gameNames[placeId] or ("Game_%d"):format(placeId)
+end
 
 -- Configuration
-FAF.Config = {
+GD.Config = {
 	AutoCopyClipboard = true,
-	DefaultFolder = "FarmAFish_Decompiled",
+	DefaultFolder = getGameName() .. "_Decompiled",
 	BatchSize = 25,      -- Yield every N scripts (just enough to not freeze Roblox)
-	BatchDelay = 0.001        -- No delay needed, just yield to let Roblox breathe
+	BatchDelay = 0.001,       -- No delay needed, just yield to let Roblox breathe
+	GameName = getGameName()
 }
 
 -- Core services to exclude from decompilation (Roblox internal files)
@@ -15458,63 +15474,63 @@ local function getDateString()
 end
 
 -- Decompile a single script and optionally save
-FAF.GetScript = function(script, saveToFile)
+GD.GetScript = function(script, saveToFile)
 	if not script or not script:IsA("LuaSourceContainer") then
-		warn("FAF: Invalid script object")
+		warn("GD: Invalid script object")
 		return nil
 	end
 	
 	if not env.isViableDecompileScript(script) then
-		warn("FAF: Script is not viable for decompilation")
+		warn("GD: Script is not viable for decompilation")
 		return nil
 	end
 	
 	local success, source = pcall(env.decompile, script)
 	if not success or not source then
-		local errorMsg = ("-- FAF Decompiler failed to decompile %s\n-- Error: %s"):format(script.ClassName, tostring(source))
+		local errorMsg = ("-- GD Decompiler failed to decompile %s\n-- Error: %s"):format(script.ClassName, tostring(source))
 		warn(errorMsg)
 		return errorMsg
 	end
 	
-	print(("FAF: ✓ Decompiled %s (%s)"):format(script.Name, script.ClassName))
+	print(("GD: ✓ Decompiled %s (%s)"):format(script.Name, script.ClassName))
 	
 	-- Auto copy to clipboard
-	if FAF.Config.AutoCopyClipboard and env.setclipboard then
+	if GD.Config.AutoCopyClipboard and env.setclipboard then
 		pcall(env.setclipboard, source)
-		print("FAF: ✓ Copied to clipboard!")
+		print("GD: ✓ Copied to clipboard!")
 	end
 	
 	-- Save to file if requested
 	if saveToFile and env.writefile then
-		local folder = FAF.Config.DefaultFolder
+		local folder = GD.Config.DefaultFolder
 		ensureFolder(folder)
 		local fileName = ("%s/%s_%s.lua"):format(folder, cleanFileName(script.Name), script.ClassName)
 		pcall(env.writefile, fileName, source)
-		print(("FAF: ✓ Saved to %s"):format(fileName))
+		print(("GD: ✓ Saved to %s"):format(fileName))
 	end
 	
 	return source
 end
 
 -- Save a script to the Farm a Fish folder
-FAF.Save = function(script, customName)
+GD.Save = function(script, customName)
 	if not script or not script:IsA("LuaSourceContainer") then
-		warn("FAF.Save: Invalid script object")
+		warn("GD.Save: Invalid script object")
 		return false
 	end
 	
 	if not env.writefile then
-		warn("FAF.Save: writefile not available")
+		warn("GD.Save: writefile not available")
 		return false
 	end
 	
 	local success, source = pcall(env.decompile, script)
 	if not success or not source then
-		warn("FAF.Save: Failed to decompile")
+		warn("GD.Save: Failed to decompile")
 		return false
 	end
 	
-	local folder = FAF.Config.DefaultFolder
+	local folder = GD.Config.DefaultFolder
 	ensureFolder(folder)
 	
 	local fileName
@@ -15526,24 +15542,24 @@ FAF.Save = function(script, customName)
 	
 	local saveSuccess = pcall(env.writefile, fileName, source)
 	if saveSuccess then
-		print(("FAF: ✓ Saved to %s"):format(fileName))
+		print(("GD: ✓ Saved to %s"):format(fileName))
 		return true, fileName
 	else
-		warn("FAF.Save: Failed to write file")
+		warn("GD.Save: Failed to write file")
 		return false
 	end
 end
 
 -- Dump all Farm a Fish game scripts (organized by service)
-FAF.DumpAll = function(parent)
+GD.DumpAll = function(parent)
 	parent = parent or game
 	
 	if not env.writefile or not env.makefolder then
-		warn("FAF.DumpAll: File operations not available")
+		warn("GD.DumpAll: File operations not available")
 		return false
 	end
 	
-	local baseFolder = ("FarmAFish_Dump_%s"):format(getDateString())
+	local baseFolder = ("%s_Dump_%s"):format(GD.Config.GameName, getDateString())
 	ensureFolder(baseFolder)
 	
 	-- Create subfolders for organization
@@ -15564,9 +15580,9 @@ FAF.DumpAll = function(parent)
 	local failed = 0
 	local batchCount = 0
 	
-	print("FAF: Starting full dump (with throttling to prevent freeze)...")
-	print(("FAF: Saving to folder: %s"):format(baseFolder))
-	print(("FAF: Batch size: %d, Delay: %.2fs"):format(FAF.Config.BatchSize, FAF.Config.BatchDelay))
+	print("GD: Starting full dump (with throttling to prevent freeze)...")
+	print(("GD: Saving to folder: %s"):format(baseFolder))
+	print(("GD: Batch size: %d, Delay: %.2fs"):format(GD.Config.BatchSize, GD.Config.BatchDelay))
 	
 	for _, obj in pairs(parent:GetDescendants()) do
 		if obj:IsA("LuaSourceContainer") and env.isViableDecompileScript(obj) and not isFromCoreService(obj) then
@@ -15591,9 +15607,9 @@ FAF.DumpAll = function(parent)
 					batchCount = batchCount + 1
 					
 					-- Throttle: yield every BatchSize scripts
-					if batchCount >= FAF.Config.BatchSize then
-						print(("FAF: [%d] scripts saved... (pausing)"):format(count))
-						task.wait(FAF.Config.BatchDelay)
+					if batchCount >= GD.Config.BatchSize then
+						print(("GD: [%d] scripts saved... (pausing)"):format(count))
+						task.wait(GD.Config.BatchDelay)
 						batchCount = 0
 					end
 				end
@@ -15604,10 +15620,10 @@ FAF.DumpAll = function(parent)
 	end
 	
 	print("========================================")
-	print(("FAF: ✓ Dump complete!"):format())
-	print(("FAF: Saved %d scripts to '%s'"):format(count, baseFolder))
+	print(("GD: ✓ Dump complete!"):format())
+	print(("GD: Saved %d scripts to '%s'"):format(count, baseFolder))
 	if failed > 0 then
-		print(("FAF: ⚠ %d scripts failed to decompile"):format(failed))
+		print(("GD: ⚠ %d scripts failed to decompile"):format(failed))
 	end
 	print("========================================")
 	
@@ -15615,24 +15631,24 @@ FAF.DumpAll = function(parent)
 end
 
 -- Dump specific service (ReplicatedStorage, Workspace, etc.)
-FAF.DumpService = function(serviceName)
+GD.DumpService = function(serviceName)
 	local service = game:FindFirstChild(serviceName) or game:GetService(serviceName)
 	if not service then
-		warn(("FAF.DumpService: Service '%s' not found"):format(serviceName))
+		warn(("GD.DumpService: Service '%s' not found"):format(serviceName))
 		return false
 	end
 	
 	if not env.writefile or not env.makefolder then
-		warn("FAF.DumpService: File operations not available")
+		warn("GD.DumpService: File operations not available")
 		return false
 	end
 	
-	local folder = ("FarmAFish_%s_%s"):format(serviceName, getDateString())
+	local folder = ("%s_%s_%s"):format(GD.Config.GameName, serviceName, getDateString())
 	ensureFolder(folder)
 	
 	local count = 0
 	local batchCount = 0
-	print(("FAF: Dumping %s..."):format(serviceName))
+	print(("GD: Dumping %s..."):format(serviceName))
 	
 	for _, obj in pairs(service:GetDescendants()) do
 		if obj:IsA("LuaSourceContainer") and env.isViableDecompileScript(obj) and not isFromCoreService(obj) then
@@ -15645,23 +15661,23 @@ FAF.DumpService = function(serviceName)
 				batchCount = batchCount + 1
 				
 				-- Throttle to prevent freeze
-				if batchCount >= FAF.Config.BatchSize then
-					print(("FAF: [%d] %s (pausing...)"):format(count, obj.Name))
-					task.wait(FAF.Config.BatchDelay)
+				if batchCount >= GD.Config.BatchSize then
+					print(("GD: [%d] %s (pausing...)"):format(count, obj.Name))
+					task.wait(GD.Config.BatchDelay)
 					batchCount = 0
 				else
-					print(("FAF: [%d] %s"):format(count, obj.Name))
+					print(("GD: [%d] %s"):format(count, obj.Name))
 				end
 			end
 		end
 	end
 	
-	print(("FAF: ✓ Saved %d scripts from %s to '%s'"):format(count, serviceName, folder))
+	print(("GD: ✓ Saved %d scripts from %s to '%s'"):format(count, serviceName, folder))
 	return true, count, folder
 end
 
 -- Find and dump scripts by name pattern
-FAF.Find = function(pattern, saveAll)
+GD.Find = function(pattern, saveAll)
 	local results = {}
 	
 	for _, obj in pairs(game:GetDescendants()) do
@@ -15675,42 +15691,52 @@ FAF.Find = function(pattern, saveAll)
 					FullName = obj:GetFullName(),
 					ClassName = obj.ClassName
 				})
-				print(("FAF: Found: %s (%s)"):format(obj:GetFullName(), obj.ClassName))
+				print(("GD: Found: %s (%s)"):format(obj:GetFullName(), obj.ClassName))
 			end
 		end
 	end
 	
-	print(("FAF: Found %d scripts matching '%s'"):format(#results, pattern))
+	print(("GD: Found %d scripts matching '%s'"):format(#results, pattern))
 	
 	-- Save all if requested
 	if saveAll and #results > 0 and env.writefile then
-		local folder = ("FarmAFish_Search_%s"):format(cleanFileName(pattern))
+		local folder = ("%s_Search_%s"):format(GD.Config.GameName, cleanFileName(pattern))
 		ensureFolder(folder)
 		
 		for i, result in pairs(results) do
 			local fileName = ("%s/%s_%s.lua"):format(folder, cleanFileName(result.FullName:gsub("%.", "_")), result.ClassName)
 			pcall(env.writefile, fileName, result.Source)
 		end
-		print(("FAF: ✓ Saved %d scripts to '%s'"):format(#results, folder))
+		print(("GD: ✓ Saved %d scripts to '%s'"):format(#results, folder))
 	end
 	
 	return results
 end
 
--- Get Farm a Fish specific modules (Fishing, Inventory, etc.)
-FAF.GetCoreModules = function()
-	local coreModules = {
-		"Fishing",
-		"Fish",
+-- Get game core modules (common patterns across games)
+GD.GetCoreModules = function(customModules)
+	-- Universal module patterns that work across many games
+	local coreModules = customModules or {
+		"Main",
+		"Config",
+		"Settings",
+		"Player",
+		"Character",
 		"Inventory",
 		"Shop",
-		"Farm",
-		"Rod",
-		"Player",
-		"Character"
+		"Data",
+		"Client",
+		"Server",
+		"Module",
+		"Handler",
+		"Controller",
+		"Manager",
+		"Service",
+		"Util",
+		"Helper"
 	}
 	
-	local folder = ("FarmAFish_Core_%s"):format(getDateString())
+	local folder = ("%s_Core_%s"):format(GD.Config.GameName, getDateString())
 	if env.makefolder then
 		ensureFolder(folder)
 	end
@@ -15718,7 +15744,7 @@ FAF.GetCoreModules = function()
 	local found = {}
 	local count = 0
 	
-	print("FAF: Searching for Farm a Fish core modules...")
+	print(("GD: Searching for %s core modules..."):format(GD.Config.GameName))
 	
 	for _, moduleName in pairs(coreModules) do
 		for _, obj in pairs(game:GetDescendants()) do
@@ -15737,18 +15763,18 @@ FAF.GetCoreModules = function()
 						pcall(env.writefile, fileName, source)
 					end
 					
-					print(("FAF: [%d] ✓ %s"):format(count, obj:GetFullName()))
+					print(("GD: [%d] ✓ %s"):format(count, obj:GetFullName()))
 				end
 			end
 		end
 	end
 	
-	print(("FAF: ✓ Found %d core modules, saved to '%s'"):format(count, folder))
+	print(("GD: ✓ Found %d core modules, saved to '%s'"):format(count, folder))
 	return found, folder
 end
 
 -- Get remote events and functions
-FAF.GetRemotes = function()
+GD.GetRemotes = function()
 	local remotes = {
 		RemoteEvents = {},
 		RemoteFunctions = {}
@@ -15764,85 +15790,85 @@ FAF.GetRemotes = function()
 		end
 	end
 	
-	print(("FAF: Found %d RemoteEvents, %d RemoteFunctions"):format(#remotes.RemoteEvents, #remotes.RemoteFunctions))
+	print(("GD: Found %d RemoteEvents, %d RemoteFunctions"):format(#remotes.RemoteEvents, #remotes.RemoteFunctions))
 	return remotes
 end
 
 -- Quick path access
-FAF.Get = function(path)
+GD.Get = function(path)
 	local current = game
 	for _, part in pairs(path:split(".")) do
 		current = current:FindFirstChild(part)
 		if not current then
-			warn(("FAF.Get: Path not found at '%s'"):format(part))
+			warn(("GD.Get: Path not found at '%s'"):format(part))
 			return nil
 		end
 	end
 	
 	if current:IsA("LuaSourceContainer") then
-		return FAF.GetScript(current, false)
+		return GD.GetScript(current, false)
 	else
 		return current
 	end
 end
 
 -- Print help
-FAF.Help = function()
+GD.Help = function()
 	print([[
 ========================================
-Farm a Fish Decompiler - ZenX Studio
+Universal Game Decompiler - ZenX Studio
 ========================================
 
 QUICK DUMP COMMANDS:
-  FAF.DumpAll()              - Dump ALL game scripts (organized by service)
-  FAF.DumpService("name")    - Dump specific service
+  GD.DumpAll()              - Dump ALL game scripts (organized by service)
+  GD.DumpService("name")    - Dump specific service
                               Examples: "ReplicatedStorage", "Workspace"
-  FAF.GetCoreModules()       - Get Fishing, Fish, Inventory, Shop modules
+  GD.GetCoreModules()       - Get common game modules (Main, Player, etc.)
+  GD.GetCoreModules({"Custom","Patterns"}) - Search for custom module names
 
 SINGLE SCRIPT:
-  FAF.GetScript(script)      - Decompile & copy to clipboard
-  FAF.GetScript(script,true) - Decompile & save to file
-  FAF.Save(script)           - Save script to FarmAFish folder
-  FAF.Save(script, "name")   - Save with custom name
+  GD.GetScript(script)      - Decompile & copy to clipboard
+  GD.GetScript(script,true) - Decompile & save to file
+  GD.Save(script)           - Save script to game folder
+  GD.Save(script, "name")   - Save with custom name
 
 SEARCH:
-  FAF.Find("pattern")        - Find scripts by name
-  FAF.Find("pattern", true)  - Find and save all matches
+  GD.Find("pattern")        - Find scripts by name
+  GD.Find("pattern", true)  - Find and save all matches
 
 UTILITY:
-  FAF.Get("path.to.script")  - Quick decompile by path
-  FAF.GetRemotes()           - List all RemoteEvents/Functions
+  GD.Get("path.to.script")  - Quick decompile by path
+  GD.GetRemotes()           - List all RemoteEvents/Functions
 
 EXAMPLES:
   -- Dump everything
-  FAF.DumpAll()
+  GD.DumpAll()
   
   -- Dump just ReplicatedStorage
-  FAF.DumpService("ReplicatedStorage")
+  GD.DumpService("ReplicatedStorage")
   
-  -- Find all Fishing-related scripts
-  FAF.Find("Fishing", true)
+  -- Find scripts matching a pattern
+  GD.Find("Handler", true)
   
-  -- Get Farm a Fish core modules
-  FAF.GetCoreModules()
+  -- Get game core modules
+  GD.GetCoreModules()
   
   -- Quick get specific script
-  FAF.Get("ReplicatedStorage.Shared.Fishing")
+  GD.Get("ReplicatedStorage.Shared.Module")
 
 OUTPUT FOLDERS (in executor workspace):
-  FarmAFish_Dump_YYYY-MM-DD/
-  FarmAFish_ReplicatedStorage_YYYY-MM-DD/
-  FarmAFish_Core_YYYY-MM-DD/
-  FarmAFish_Search_pattern/
+  <GameName>_Dump_YYYY-MM-DD/
+  <GameName>_<ServiceName>_YYYY-MM-DD/
+  <GameName>_Core_YYYY-MM-DD/
+  <GameName>_Search_<pattern>/
 ========================================
 ]])
 end
 
 print("========================================")
-print("🎮 Farm a Fish Decompiler Loaded!")
+print("🎮 Universal Game Decompiler Loaded!")
+print(("📍 Detected Game: %s"):format(GD.Config.GameName))
 print("📁 Output: executor workspace folder")
-print("💡 Type 'FAF.Help()' for commands")
-print("⚡ Quick dump: FAF.DumpAll()")
+print("💡 Type 'GD.Help()' for commands")
+print("⚡ Quick dump: GD.DumpAll()")
 print("========================================")
-
-FAF.DumpAll()
