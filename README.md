@@ -1,20 +1,52 @@
 # For-All
 
-Load the main script:
+Universal Roblox script collection with smart game detection and organized folder structure.
 
-## 🚀 World Zero
+## 📁 Repository Structure
+
+```
+For-All/
+├── Universal/           # Tools that work with ALL games
+│   └── dex.lua          # Universal Dex++ with smart game detection
+├── Games/               # Game-specific scripts
+│   ├── WorldZero/       # World Zero scripts
+│   ├── UltraUnfair/     # Ultra Unfair scripts
+│   ├── FarmAFish/       # Farm A Fish scripts
+│   ├── PetSim99/        # Pet Simulator 99 scripts
+│   ├── Descent/         # Descent scripts
+│   └── Misc/            # Miscellaneous scripts
+└── README.md
+```
+
+## 🔧 Universal Tools
+
+### Dex++ (Universal Edition)
+Smart debugging tool that auto-detects the current game and organizes output accordingly.
+
+```lua
+loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/main/Universal/dex.lua"))()
+```
+
+**Features:**
+- Auto-detects game name from PlaceId
+- Organizes decompiled scripts by game name
+- Works with ANY Roblox game
+
+## 🎮 Game Scripts
+
+### 🚀 World Zero
 
 ```lua
 loadstring(game:HttpGet("https://api.junkie-development.de/api/v1/luascripts/public/ef2cd821474d60882ccc855716ff1a11c1bcfa0b77cbdffaf96f6a7aa8ffd5a2/download"))()
 ```
 
-## 🚀 Ultra Unfair
+### 🚀 Ultra Unfair
 
 ```lua
-loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/main/PB%20Unfair/UU_Main.lua"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/main/Games/UltraUnfair/UU_Main.lua"))()
 ```
 
-## 🚀 Farm A Fish
+### 🚀 Farm A Fish
 
 ```lua
 -- ═══════════════════════════════════════════════════════════════════════════
@@ -166,7 +198,7 @@ for key, defaultValue in pairs(FAF_DEFAULTS) do
     end
 end
 
-loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/main/Random%20Scripts/FarmAFish.lua"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/main/Games/FarmAFish/FarmAFish.lua"))()
 ```
 
 ### 😎 Upcoming
