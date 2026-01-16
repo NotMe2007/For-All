@@ -5,6 +5,9 @@
 	Developed by Chillz
 	
 	Dex++ is a revival of Moon's Dex, made to fulfill Moon's Dex prophecy.
+
+	Modded by ZenX Studio for Farm a Fish
+	dex version: 2.2.2
 ]]
 
 local selection
@@ -967,21 +970,22 @@ local function main()
 		local insts = getDescendants(root)
 		for i = 1,#insts do
 			local obj = insts[i]
-			if nodes[obj] then continue end -- Deferred
+			if not nodes[obj] then -- Deferred
+				local par = nodes[ffa(obj,"Instance")]
+				if par then
+					local newNode = {Obj = obj, Parent = par}
+					nodes[obj] = newNode
+					par[#par+1] = newNode
 
-			local par = nodes[ffa(obj,"Instance")]
-			if not par then continue end
-			local newNode = {Obj = obj, Parent = par}
-			nodes[obj] = newNode
-			par[#par+1] = newNode
-
-			-- Nil Handling
-			if isNil then
-				nilMap[obj] = true
-				nilCons[obj] = nilCons[obj] or {
-					connectSignal(obj.ChildAdded,addObject),
-					connectSignal(obj.AncestryChanged,moveObject),
-				}
+					-- Nil Handling
+					if isNil then
+						nilMap[obj] = true
+						nilCons[obj] = nilCons[obj] or {
+							connectSignal(obj.ChildAdded,addObject),
+							connectSignal(obj.AncestryChanged,moveObject),
+						}
+					end
+				end
 			end
 		end
 
@@ -1241,28 +1245,29 @@ local function main()
 			for i = 1,#root do
 				local n = root[i]
 
-				if (isSearching and not searchResults[n]) or n.Del then continue end
+				if not ((isSearching and not searchResults[n]) or n.Del) then
 
-				if useNameWidth then
-					local nameWidth = n.NameWidth
-					if not nameWidth then
-						local objName = tostring(n.Obj)
-						nameWidth = nameCache[objName]
+					if useNameWidth then
+						local nameWidth = n.NameWidth
 						if not nameWidth then
-							nameWidth = getTextSize(textServ,objName,14,font,size).X
-							nameCache[objName] = nameWidth
+							local objName = tostring(n.Obj)
+							nameWidth = nameCache[objName]
+							if not nameWidth then
+								nameWidth = getTextSize(textServ,objName,14,font,size).X
+								nameCache[objName] = nameWidth
+							end
+							n.NameWidth = nameWidth
 						end
-						n.NameWidth = nameWidth
+						if nameWidth > maxNameWidth then
+							maxNameWidth = nameWidth
+						end
 					end
-					if nameWidth > maxNameWidth then
-						maxNameWidth = nameWidth
-					end
-				end
 
-				tree[count] = n
-				count = count + 1
-				if expanded[n] and #n > 0 then
-					recur(n,depth)
+					tree[count] = n
+					count = count + 1
+					if expanded[n] and #n > 0 then
+						recur(n,depth)
+					end
 				end
 			end
 		end
@@ -3420,26 +3425,28 @@ return search]==]
 			for i = 1,#insts do
 				local obj = insts[i]
 				local par = nodes[ffa(obj,"Instance")]
-				if not par then continue end
-				local newNode = {
-					Obj = obj,
-					Parent = par,
-				}
-				nodes[obj] = newNode
-				par[#par+1] = newNode
+				if par then
+					local newNode = {
+						Obj = obj,
+						Parent = par,
+					}
+					nodes[obj] = newNode
+					par[#par+1] = newNode
+				end
 			end
 		else
 			for i = 1,#insts do
 				local obj = insts[i]
 				local s,parObj = pcall(ffa,obj,"Instance")
 				local par = nodes[parObj]
-				if not par then continue end
-				local newNode = {
-					Obj = obj,
-					Parent = par,
-				}
-				nodes[obj] = newNode
-				par[#par+1] = newNode
+				if par then
+					local newNode = {
+						Obj = obj,
+						Parent = par,
+					}
+					nodes[obj] = newNode
+					par[#par+1] = newNode
+				end
 			end
 		end
 	end
@@ -8097,57 +8104,58 @@ local function main()
 
 			for i = 1,#found do
 				local pos = found[i]
-				if pos <= lastEnding then continue end
+				if pos > lastEnding then
 
-				local ending = pos
-				local typ = foundMap[pos]
-				if typ == 1 then
-					ending = find(text,'"',pos+1,true)
-					while ending and sub(text,ending-1,ending-1) == "\\" do
-						ending = find(text,'"',ending+1,true)
-					end
-					if not ending then ending = textLen end
-				elseif typ == 2 then
-					ending = find(text,"'",pos+1,true)
-					while ending and sub(text,ending-1,ending-1) == "\\" do
-						ending = find(text,"'",ending+1,true)
-					end
-					if not ending then ending = textLen end
-				elseif typ == 3 then
-					_,ending = find(text,"]"..extras[pos].."]",pos+1,true)
-					if not ending then ending = textLen end
-				elseif typ == 4 then
-					local ahead = foundMap[pos+2]
-
-					if ahead == 3 then
-						_,ending = find(text,"]"..extras[pos+2].."]",pos+1,true)
+					local ending = pos
+					local typ = foundMap[pos]
+					if typ == 1 then
+						ending = find(text,'"',pos+1,true)
+						while ending and sub(text,ending-1,ending-1) == "\\" do
+							ending = find(text,'"',ending+1,true)
+						end
 						if not ending then ending = textLen end
-					else
-						ending = find(text,"\n",pos+1,true) or textLen
+					elseif typ == 2 then
+						ending = find(text,"'",pos+1,true)
+						while ending and sub(text,ending-1,ending-1) == "\\" do
+							ending = find(text,"'",ending+1,true)
+						end
+						if not ending then ending = textLen end
+					elseif typ == 3 then
+						_,ending = find(text,"]"..extras[pos].."]",pos+1,true)
+						if not ending then ending = textLen end
+					elseif typ == 4 then
+						local ahead = foundMap[pos+2]
+
+						if ahead == 3 then
+							_,ending = find(text,"]"..extras[pos+2].."]",pos+1,true)
+							if not ending then ending = textLen end
+						else
+							ending = find(text,"\n",pos+1,true) or textLen
+						end
 					end
-				end
 
-				while pos > lineEnd do
-					curLine = curLine + 1
-					--lineTableCount = 1
-					lineEnd = newLines[curLine] or textLen+1
-				end
-				while true do
-					local lineTable = foundHighlights[curLine]
-					if not lineTable then lineTable = {} foundHighlights[curLine] = lineTable end
-					lineTable[pos] = {typ,ending}
-					--lineTableCount = lineTableCount + 1
-
-					if ending > lineEnd then
+					while pos > lineEnd do
 						curLine = curLine + 1
+						--lineTableCount = 1
 						lineEnd = newLines[curLine] or textLen+1
-					else
-						break
 					end
-				end
+					while true do
+						local lineTable = foundHighlights[curLine]
+						if not lineTable then lineTable = {} foundHighlights[curLine] = lineTable end
+						lineTable[pos] = {typ,ending}
+						--lineTableCount = lineTableCount + 1
 
-				lastEnding = ending
-				--if i < 200 then print(curLine) end
+						if ending > lineEnd then
+							curLine = curLine + 1
+							lineEnd = newLines[curLine] or textLen+1
+						else
+							break
+						end
+					end
+
+					lastEnding = ending
+					--if i < 200 then print(curLine) end
+				end
 			end
 			self.PreHighlights = foundHighlights
 			--print(tick()-start)
@@ -8185,97 +8193,99 @@ local function main()
 			end
 
 			for col = 1,#lineText do
-				if col <= lastEnding then highlights[col] = currentType continue end
-
-				local pre = preHighlightMap[col]
-				if pre then
-					currentType = pre[1]
-					lastEnding = pre[2]
+				if col <= lastEnding then
 					highlights[col] = currentType
-					wordBeginsDotted = false
-					lastWord = nil
-					funcStatus = 0
 				else
-					local char = sub(lineText,col,col)
-					if find(char,"[%a_]") then
-						local word = match(lineText,"[%a%d_]+",col)
-						local wordType = (keywords[word] and 7) or (builtIns[word] and 8)
-
-						lastEnding = col+#word-1
-
-						if wordType ~= 7 then
-							if wordBeginsDotted then
-								local prevBuiltIn = lastWord and builtIns[lastWord]
-								wordType = (prevBuiltIn and type(prevBuiltIn) == "table" and prevBuiltIn[word] and 8) or 10
-							end
-
-							if wordType ~= 8 then
-								local x,y,br = find(lineText,"^%s*([%({\"'])",lastEnding+1)
-								if x then
-									wordType = (funcStatus > 0 and br == "(" and 16) or 9
-									funcStatus = 0
-								end
-							end
-						else
-							wordType = specialKeywordsTypes[word] or wordType
-							funcStatus = (word == "function" and 1 or 0)
-						end
-
-						lastWord = word
-						wordBeginsDotted = false
-						if funcStatus > 0 then funcStatus = 1 end
-
-						if wordType then
-							currentType = wordType
-							highlights[col] = currentType
-						else
-							currentType = nil
-						end
-					elseif find(char,"%p") then
-						local isDot = (char == ".")
-						local isNum = isDot and find(sub(lineText,col+1,col+1),"%d")
-						highlights[col] = (isNum and 6 or 5)
-
-						if not isNum then
-							local dotStr = isDot and match(lineText,"%.%.?%.?",col)
-							if dotStr and #dotStr > 1 then
-								currentType = 5
-								lastEnding = col+#dotStr-1
-								wordBeginsDotted = false
-								lastWord = nil
-								funcStatus = 0
-							else
-								if isDot then
-									if wordBeginsDotted then
-										lastWord = nil
-									else
-										wordBeginsDotted = true
-									end
-								else
-									wordBeginsDotted = false
-									lastWord = nil
-								end
-
-								funcStatus = ((isDot or char == ":") and funcStatus == 1 and 2) or 0
-							end
-						end
-					elseif find(char,"%d") then
-						local _,endPos = find(lineText,"%x+",col)
-						local endPart = sub(lineText,endPos,endPos+1)
-						if (endPart == "e+" or endPart == "e-") and find(sub(lineText,endPos+2,endPos+2),"%d") then
-							endPos = endPos + 1
-						end
-						currentType = 6
-						lastEnding = endPos
-						highlights[col] = 6
+					local pre = preHighlightMap[col]
+					if pre then
+						currentType = pre[1]
+						lastEnding = pre[2]
+						highlights[col] = currentType
 						wordBeginsDotted = false
 						lastWord = nil
 						funcStatus = 0
 					else
-						highlights[col] = currentType
-						local _,endPos = find(lineText,"%s+",col)
-						if endPos then
+						local char = sub(lineText,col,col)
+						if find(char,"[%a_]") then
+							local word = match(lineText,"[%a%d_]+",col)
+							local wordType = (keywords[word] and 7) or (builtIns[word] and 8)
+
+							lastEnding = col+#word-1
+
+							if wordType ~= 7 then
+								if wordBeginsDotted then
+									local prevBuiltIn = lastWord and builtIns[lastWord]
+									wordType = (prevBuiltIn and type(prevBuiltIn) == "table" and prevBuiltIn[word] and 8) or 10
+								end
+
+								if wordType ~= 8 then
+									local x,y,br = find(lineText,"^%s*([%({\"'])",lastEnding+1)
+									if x then
+										wordType = (funcStatus > 0 and br == "(" and 16) or 9
+										funcStatus = 0
+									end
+								end
+							else
+								wordType = specialKeywordsTypes[word] or wordType
+								funcStatus = (word == "function" and 1 or 0)
+							end
+
+							lastWord = word
+							wordBeginsDotted = false
+							if funcStatus > 0 then funcStatus = 1 end
+
+							if wordType then
+								currentType = wordType
+								highlights[col] = currentType
+							else
+								currentType = nil
+							end
+						elseif find(char,"%p") then
+							local isDot = (char == ".")
+							local isNum = isDot and find(sub(lineText,col+1,col+1),"%d")
+							highlights[col] = (isNum and 6 or 5)
+
+							if not isNum then
+								local dotStr = isDot and match(lineText,"%.%.?%.?",col)
+								if dotStr and #dotStr > 1 then
+									currentType = 5
+									lastEnding = col+#dotStr-1
+									wordBeginsDotted = false
+									lastWord = nil
+									funcStatus = 0
+								else
+									if isDot then
+										if wordBeginsDotted then
+											lastWord = nil
+										else
+											wordBeginsDotted = true
+										end
+									else
+										wordBeginsDotted = false
+										lastWord = nil
+									end
+
+									funcStatus = ((isDot or char == ":") and funcStatus == 1 and 2) or 0
+								end
+							end
+						elseif find(char,"%d") then
+							local _,endPos = find(lineText,"%x+",col)
+							local endPart = sub(lineText,endPos,endPos+1)
+							if (endPart == "e+" or endPart == "e-") and find(sub(lineText,endPos+2,endPos+2),"%d") then
+								endPos = endPos + 1
+							end
+							currentType = 6
 							lastEnding = endPos
+							highlights[col] = 6
+							wordBeginsDotted = false
+							lastWord = nil
+							funcStatus = 0
+						else
+							highlights[col] = currentType
+							local _,endPos = find(lineText,"%s+",col)
+							if endPos then
+								lastEnding = endPos
+							end
 						end
 					end
 				end
@@ -13329,20 +13339,208 @@ local function main()
 		Button.Transparency = 1
 		
 		FilenameTextBox.TextBox.Text = fileName
-		Button.MouseButton1Click:Connect(function()
-			local fileName = FilenameTextBox.TextBox.Text:gsub("{TIMESTAMP}", os.date("%d-%m-%Y_%H-%M-%S"))
+		
+		-- Helper function to get all scripts that should be decompiled
+		local function GetAllScripts(root)
+			local scripts = {}
+			local function recurse(obj)
+				if obj:IsA("LuaSourceContainer") then
+					if env.isViableDecompileScript and env.isViableDecompileScript(obj) then
+						table.insert(scripts, obj)
+					end
+				end
+				for _, child in ipairs(obj:GetChildren()) do
+					pcall(function()
+						recurse(child)
+					end)
+				end
+			end
+			pcall(function()
+				recurse(root)
+			end)
+			return scripts
+		end
+		
+		-- Helper function to create a safe filename from script path
+		local function GetScriptFileName(script)
+			local path = ""
+			local current = script
+			while current and current ~= game do
+				path = (current.Name or "Unknown") .. (path ~= "" and "_" or "") .. path
+				current = current.Parent
+			end
+			return env.parsefile and env.parsefile(path) or path:gsub("[^%w_%-]", "_")
+		end
+		
+		-- Helper function to check if a file has decompile errors
+		local function HasDecompileError(content)
+			if not content then return true end
+			local errorPatterns = {
+				"DECOMPILER ERROR",
+				"failed to decompile",
+				"-- Decompilation error",
+				"KONSTANTERROR",
+				"-- Error:",
+				"decompiler crashed",
+				"-- Failed"
+			}
+			for _, pattern in ipairs(errorPatterns) do
+				if content:find(pattern) then
+					return true
+				end
+			end
+			return false
+		end
+		
+		-- Smart Save function that checks for existing folder and handles missing/errored files
+		local function SmartSave()
+			if Saving then return end
+			Saving = true
+			
+			local dateStr = os.date("%d-%m-%Y")
+			local baseFileName = FilenameTextBox.TextBox.Text:gsub("{TIMESTAMP}", dateStr)
+			local folderPath = baseFileName
+			
+			-- Check if folder already exists (by checking for any file in that pattern)
+			local folderExists = false
+			local existingFiles = {}
+			local erroredFiles = {}
+			local missingScripts = {}
+			
+			if env.isfolder and env.listfiles then
+				folderExists = env.isfolder(folderPath)
+				
+				if folderExists then
+					window:SetTitle("Save Instance - Checking existing folder...")
+					
+					-- Get list of existing files
+					local success, files = pcall(env.listfiles, folderPath)
+					if success and files then
+						for _, filePath in ipairs(files) do
+							local fileName = filePath:match("([^/\\]+)$") or filePath
+							existingFiles[fileName] = filePath
+							
+							-- Check if file has decompile errors
+							if env.readfile then
+								local readSuccess, content = pcall(env.readfile, filePath)
+								if readSuccess and content then
+									if HasDecompileError(content) then
+										table.insert(erroredFiles, {
+											path = filePath,
+											name = fileName
+										})
+									end
+								end
+							end
+						end
+					end
+					
+					-- Get all scripts that should exist
+					local allScripts = GetAllScripts(game)
+					
+					-- Check which scripts are missing
+					for _, script in ipairs(allScripts) do
+						local expectedName = GetScriptFileName(script) .. ".lua"
+						local found = false
+						for existingName, _ in pairs(existingFiles) do
+							if existingName:find(script.Name, 1, true) then
+								found = true
+								break
+							end
+						end
+						if not found then
+							table.insert(missingScripts, script)
+						end
+					end
+					
+					-- Report status
+					local statusMsg = string.format(
+						"Found: %d files, Errored: %d, Missing: %d",
+						#files or 0,
+						#erroredFiles,
+						#missingScripts
+					)
+					print("[DEX SaveInstance] " .. statusMsg)
+					window:SetTitle("Save Instance - " .. statusMsg)
+					task.wait(2)
+					
+					-- Re-decompile errored files
+					if #erroredFiles > 0 and env.decompile and env.writefile then
+						window:SetTitle("Save Instance - Fixing " .. #erroredFiles .. " errored files...")
+						
+						for i, erroredFile in ipairs(erroredFiles) do
+							-- Try to find the corresponding script
+							local scriptName = erroredFile.name:gsub("%.lua$", ""):gsub("_[^_]+$", "")
+							
+							for _, script in ipairs(allScripts) do
+								if script.Name == scriptName or GetScriptFileName(script):find(scriptName, 1, true) then
+									window:SetTitle(string.format("Save Instance - Fixing %d/%d: %s", i, #erroredFiles, script.Name))
+									
+									local success, source = pcall(env.decompile, script)
+									if success and source and not HasDecompileError(source) then
+										pcall(env.writefile, erroredFile.path, source)
+										print("[DEX] Fixed: " .. erroredFile.name)
+									end
+									break
+								end
+							end
+							
+							if i % 5 == 0 then
+								task.wait(0.1)
+							end
+						end
+					end
+					
+					-- Save missing scripts
+					if #missingScripts > 0 and env.decompile and env.writefile then
+						window:SetTitle("Save Instance - Adding " .. #missingScripts .. " missing scripts...")
+						
+						for i, script in ipairs(missingScripts) do
+							window:SetTitle(string.format("Save Instance - Adding %d/%d: %s", i, #missingScripts, script.Name))
+							
+							local success, source = pcall(env.decompile, script)
+							if success and source then
+								local savePath = folderPath .. "/" .. GetScriptFileName(script) .. ".lua"
+								pcall(env.writefile, savePath, source)
+								print("[DEX] Added missing: " .. script.Name)
+							end
+							
+							if i % 5 == 0 then
+								task.wait(0.1)
+							end
+						end
+					end
+					
+					if #erroredFiles == 0 and #missingScripts == 0 then
+						window:SetTitle("Save Instance - All files up to date!")
+					else
+						window:SetTitle(string.format("Save Instance - Done! Fixed %d, Added %d", #erroredFiles, #missingScripts))
+					end
+					
+					Saving = false
+					task.wait(5)
+					window:SetTitle("Save Instance")
+					return
+				end
+			end
+			
+			-- No existing folder or filesystem functions not available - do normal save
+			local fullFileName = FilenameTextBox.TextBox.Text:gsub("{TIMESTAMP}", os.date("%d-%m-%Y_%H-%M-%S"))
 			window:SetTitle("Save Instance - Saving")
-			local s, result = pcall(env.saveinstance, game, fileName, SaveInstanceArgs)
+			local s, result = pcall(env.saveinstance, game, fullFileName, SaveInstanceArgs)
 			if s then
 				window:SetTitle("Save Instance - Saved")
 			else
 				window:SetTitle("Save Instance - Error")
-				task.spawn(error("Failed to save the game: "..result))
+				task.spawn(error, "Failed to save the game: " .. tostring(result))
 			end
+			
+			Saving = false
 			task.wait(5)
 			window:SetTitle("Save Instance")
-			---env.saveinstance(game, fileName, SaveInstanceArgs)
-		end)
+		end
+		
+		Button.MouseButton1Click:Connect(SmartSave)
 	end
 
 	return SaveInstance
@@ -14180,7 +14378,7 @@ Main = (function()
 				local success, bytecode = pcall(env.getscriptbytecode, scriptPath)
 
 				if (not success) then
-					return `-- Failed to get script bytecode, error:\n\n--[[\n{bytecode}\n--]]`
+					return "-- Failed to get script bytecode, error:\n\n--[[\n{bytecode}\n--]]"
 				end
 
 				local time_elapsed = os.clock() - last_call
@@ -14200,7 +14398,7 @@ Main = (function()
 				last_call = os.clock()
 
 				if (httpResult.StatusCode ~= 200) then
-					return `-- Error occurred while requesting Konstant API, error:\n\n--[[\n{httpResult.Body}\n--]]`
+					return "-- Error occurred while requesting Konstant API, error:\n\n--[[\n{httpResult.Body}\n--]]"
 				else
 					return httpResult.Body
 				end
@@ -14268,7 +14466,7 @@ Main = (function()
 			game = workspace.Parent
 		end
 		
-		if Main.Elevated and not loadstring("for i = 1,1 do continue end") then incompatibleMessage("CAN'T CONTINUE OR NO LOADSTRING")end
+		if Main.Elevated and not loadstring("return true") then incompatibleMessage("NO LOADSTRING")end
 		
 		local obj = newproxy(true)
 		local mt = getmetatable(obj)
@@ -15204,424 +15402,447 @@ Main.Init()
 --for i,v in pairs(Main.MissingEnv) do print(i,v) end
 
 -- ========================================
--- Enhanced Dex API - Auto Decompile & Function Caller
+-- Farm a Fish Decompiler - ZenX Studio Edition
 -- ========================================
 
-getgenv().DexAPI = {}
-local DexAPI = getgenv().DexAPI
+getgenv().FAFDecompiler = {}
+local FAF = getgenv().FAFDecompiler
 
 -- Configuration
-DexAPI.Config = {
-	ServerURL = "http://localhost:8765",
-	AutoSendToPC = true,
-	AutoCopyClipboard = true
+FAF.Config = {
+	AutoCopyClipboard = true,
+	DefaultFolder = "FarmAFish_Decompiled",
+	BatchSize = 25,      -- Yield every N scripts (just enough to not freeze Roblox)
+	BatchDelay = 0.001        -- No delay needed, just yield to let Roblox breathe
 }
 
--- Send to PC server
-local function SendToPC(data)
-	if not DexAPI.Config.AutoSendToPC then return false end
-	if not env.request then
-		warn("DexAPI: request function not available")
-		return false
+-- Core services to exclude from decompilation (Roblox internal files)
+local ExcludedCoreServices = {
+	"CorePackages",
+	"CoreGui",
+	"RobloxScriptService",
+	"RobloxReplicatedStorage",
+	"RobloxPluginGuiService",
+	"CoreScript",
+	"BuiltInPlugins"
+}
+
+-- Check if an instance is from a core/excluded service
+local function isFromCoreService(obj)
+	if not obj then return true end
+	local fullName = obj:GetFullName()
+	for _, serviceName in pairs(ExcludedCoreServices) do
+		if fullName:find(serviceName) then
+			return true
+		end
 	end
-	
-	local success, result = pcall(function()
-		return env.request({
-			Url = DexAPI.Config.ServerURL,
-			Method = "POST",
-			Headers = {
-				["Content-Type"] = "application/json"
-			},
-			Body = game:GetService("HttpService"):JSONEncode(data)
-		})
-	end)
-	
-	if success and result.Success then
-		print("DexAPI: ✓ Sent to PC!")
-		return true
-	else
-		warn("DexAPI: Failed to send to PC - Is server running?")
-		return false
-	end
+	return false
 end
 
--- Auto-decompile and copy script source
-DexAPI.GetScript = function(script, sendToPC)
+-- Create folder structure for organized saving
+local function ensureFolder(folderPath)
+	if not env.makefolder then return false end
+	pcall(env.makefolder, folderPath)
+	return true
+end
+
+-- Clean filename for saving
+local function cleanFileName(name)
+	return name:gsub("[^%w%s_%-]", "_"):gsub("%s+", "_")
+end
+
+-- Get date string for folder naming
+local function getDateString()
+	local date = os.date("*t")
+	return ("%04d-%02d-%02d"):format(date.year, date.month, date.day)
+end
+
+-- Decompile a single script and optionally save
+FAF.GetScript = function(script, saveToFile)
 	if not script or not script:IsA("LuaSourceContainer") then
-		warn("DexAPI.GetScript: Invalid script object")
+		warn("FAF: Invalid script object")
 		return nil
 	end
 	
 	if not env.isViableDecompileScript(script) then
-		warn("DexAPI.GetScript: Script is not viable for decompilation")
+		warn("FAF: Script is not viable for decompilation")
 		return nil
 	end
 	
 	local success, source = pcall(env.decompile, script)
 	if not success or not source then
-		local errorMsg = ("-- DEX API - %s failed to decompile %s\n-- Error: %s"):format(env.executor or "Unknown", script.ClassName, tostring(source))
+		local errorMsg = ("-- FAF Decompiler failed to decompile %s\n-- Error: %s"):format(script.ClassName, tostring(source))
 		warn(errorMsg)
 		return errorMsg
 	end
 	
-	print(("DexAPI: Decompiled %s (%s)"):format(script.Name, script.ClassName))
+	print(("FAF: ✓ Decompiled %s (%s)"):format(script.Name, script.ClassName))
 	
-	-- Send to PC if enabled
-	if sendToPC ~= false then
-		SendToPC({
-			action = "save_script",
-			name = script.Name,
-			source = source,
-			type = script.ClassName,
-			place_id = game.PlaceId,
-			full_name = script:GetFullName()
-		})
+	-- Auto copy to clipboard
+	if FAF.Config.AutoCopyClipboard and env.setclipboard then
+		pcall(env.setclipboard, source)
+		print("FAF: ✓ Copied to clipboard!")
 	end
 	
-	-- Auto copy to clipboard if available
-	if DexAPI.Config.AutoCopyClipboard and env.setclipboard then
-		pcall(env.setclipboard, source)
-		print("DexAPI: ✓ Copied to clipboard!")
+	-- Save to file if requested
+	if saveToFile and env.writefile then
+		local folder = FAF.Config.DefaultFolder
+		ensureFolder(folder)
+		local fileName = ("%s/%s_%s.lua"):format(folder, cleanFileName(script.Name), script.ClassName)
+		pcall(env.writefile, fileName, source)
+		print(("FAF: ✓ Saved to %s"):format(fileName))
 	end
 	
 	return source
 end
 
--- Get all scripts in game and decompile them
-DexAPI.GetAllScripts = function(parent, sendToPC)
-	parent = parent or game
-	local scripts = {}
-	local scriptsArray = {}
-	local count = 0
-	
-	print("DexAPI: Scanning for scripts...")
-	
-	for _, obj in pairs(parent:GetDescendants()) do
-		if obj:IsA("LuaSourceContainer") and env.isViableDecompileScript(obj) then
-			local success, source = pcall(env.decompile, obj)
-			if success and source then
-				count = count + 1
-				scripts[obj:GetFullName()] = {
-					Instance = obj,
-					Source = source,
-					ClassName = obj.ClassName,
-					Name = obj.Name
-				}
-				table.insert(scriptsArray, {
-					name = obj.Name,
-					source = source,
-					type = obj.ClassName,
-					full_name = obj:GetFullName()
-				})
-				print(("DexAPI: [%d] Decompiled %s (%s)"):format(count, obj:GetFullName(), obj.ClassName))
-			end
-		end
-	end
-	
-	print(("DexAPI: Successfully decompiled %d scripts!"):format(count))
-	
-	-- Send all to PC if enabled
-	if sendToPC ~= false and #scriptsArray > 0 then
-		SendToPC({
-			action = "save_multiple",
-			scripts = scriptsArray,
-			place_id = game.PlaceId
-		})
-	end
-	
-	return scripts
-end
-
--- Save script to file
-DexAPI.SaveScript = function(script, customName)
+-- Save a script to the Farm a Fish folder
+FAF.Save = function(script, customName)
 	if not script or not script:IsA("LuaSourceContainer") then
-		warn("DexAPI.SaveScript: Invalid script object")
+		warn("FAF.Save: Invalid script object")
 		return false
 	end
 	
 	if not env.writefile then
-		warn("DexAPI.SaveScript: writefile not available")
+		warn("FAF.Save: writefile not available")
 		return false
 	end
 	
 	local success, source = pcall(env.decompile, script)
 	if not success or not source then
-		warn("DexAPI.SaveScript: Failed to decompile")
+		warn("FAF.Save: Failed to decompile")
 		return false
 	end
 	
-	local fileName = customName or ("%s_%s_%i_Source.lua"):format(env.parsefile(script.Name), script.ClassName, game.PlaceId)
+	local folder = FAF.Config.DefaultFolder
+	ensureFolder(folder)
+	
+	local fileName
+	if customName then
+		fileName = ("%s/%s.lua"):format(folder, cleanFileName(customName))
+	else
+		fileName = ("%s/%s_%s.lua"):format(folder, cleanFileName(script:GetFullName()), script.ClassName)
+	end
 	
 	local saveSuccess = pcall(env.writefile, fileName, source)
 	if saveSuccess then
-		print(("DexAPI: Saved script to %s"):format(fileName))
+		print(("FAF: ✓ Saved to %s"):format(fileName))
 		return true, fileName
 	else
-		warn("DexAPI.SaveScript: Failed to write file")
+		warn("FAF.Save: Failed to write file")
 		return false
 	end
 end
 
--- Call any function and get its info
-DexAPI.GetFunctionInfo = function(func)
-	if type(func) ~= "function" then
-		warn("DexAPI.GetFunctionInfo: Not a function")
-		return nil
+-- Dump all Farm a Fish game scripts (organized by service)
+FAF.DumpAll = function(parent)
+	parent = parent or game
+	
+	if not env.writefile or not env.makefolder then
+		warn("FAF.DumpAll: File operations not available")
+		return false
 	end
 	
-	local info = {
-		Type = type(func),
-		IsLClosure = env.islclosure and env.islclosure(func) or "Unknown",
-		Upvalues = {},
-		Constants = {}
+	local baseFolder = ("FarmAFish_Dump_%s"):format(getDateString())
+	ensureFolder(baseFolder)
+	
+	-- Create subfolders for organization
+	local services = {
+		"ReplicatedStorage",
+		"StarterPlayer",
+		"StarterGui",
+		"Workspace",
+		"ServerScriptService",
+		"Other"
 	}
 	
-	-- Get upvalues if available
-	if env.getupvalues then
-		local success, upvals = pcall(env.getupvalues, func)
-		if success and upvals then
-			info.Upvalues = upvals
-			print("DexAPI: Function Upvalues:")
-			for k, v in pairs(upvals) do
-				print(("  [%s] = %s (%s)"):format(tostring(k), tostring(v), type(v)))
+	for _, svc in pairs(services) do
+		ensureFolder(baseFolder .. "/" .. svc)
+	end
+	
+	local count = 0
+	local failed = 0
+	local batchCount = 0
+	
+	print("FAF: Starting full dump (with throttling to prevent freeze)...")
+	print(("FAF: Saving to folder: %s"):format(baseFolder))
+	print(("FAF: Batch size: %d, Delay: %.2fs"):format(FAF.Config.BatchSize, FAF.Config.BatchDelay))
+	
+	for _, obj in pairs(parent:GetDescendants()) do
+		if obj:IsA("LuaSourceContainer") and env.isViableDecompileScript(obj) and not isFromCoreService(obj) then
+			local success, source = pcall(env.decompile, obj)
+			if success and source then
+				-- Determine which subfolder
+				local fullName = obj:GetFullName()
+				local subFolder = "Other"
+				for _, svc in pairs(services) do
+					if fullName:find("^" .. svc) or fullName:find("%." .. svc) then
+						subFolder = svc
+						break
+					end
+				end
+				
+				local safeName = cleanFileName(obj:GetFullName():gsub("%.", "_"))
+				local fileName = ("%s/%s/%s_%s.lua"):format(baseFolder, subFolder, safeName, obj.ClassName)
+				
+				local writeSuccess = pcall(env.writefile, fileName, source)
+				if writeSuccess then
+					count = count + 1
+					batchCount = batchCount + 1
+					
+					-- Throttle: yield every BatchSize scripts
+					if batchCount >= FAF.Config.BatchSize then
+						print(("FAF: [%d] scripts saved... (pausing)"):format(count))
+						task.wait(FAF.Config.BatchDelay)
+						batchCount = 0
+					end
+				end
+			else
+				failed = failed + 1
 			end
 		end
 	end
 	
-	-- Get constants if available
-	if env.getconstants then
-		local success, constants = pcall(env.getconstants, func)
-		if success and constants then
-			info.Constants = constants
-			print("DexAPI: Function Constants:")
-			for i, v in pairs(constants) do
-				print(("  [%d] = %s (%s)"):format(i, tostring(v), type(v)))
+	print("========================================")
+	print(("FAF: ✓ Dump complete!"):format())
+	print(("FAF: Saved %d scripts to '%s'"):format(count, baseFolder))
+	if failed > 0 then
+		print(("FAF: ⚠ %d scripts failed to decompile"):format(failed))
+	end
+	print("========================================")
+	
+	return true, count, baseFolder
+end
+
+-- Dump specific service (ReplicatedStorage, Workspace, etc.)
+FAF.DumpService = function(serviceName)
+	local service = game:FindFirstChild(serviceName) or game:GetService(serviceName)
+	if not service then
+		warn(("FAF.DumpService: Service '%s' not found"):format(serviceName))
+		return false
+	end
+	
+	if not env.writefile or not env.makefolder then
+		warn("FAF.DumpService: File operations not available")
+		return false
+	end
+	
+	local folder = ("FarmAFish_%s_%s"):format(serviceName, getDateString())
+	ensureFolder(folder)
+	
+	local count = 0
+	local batchCount = 0
+	print(("FAF: Dumping %s..."):format(serviceName))
+	
+	for _, obj in pairs(service:GetDescendants()) do
+		if obj:IsA("LuaSourceContainer") and env.isViableDecompileScript(obj) and not isFromCoreService(obj) then
+			local success, source = pcall(env.decompile, obj)
+			if success and source then
+				local safeName = cleanFileName(obj:GetFullName():gsub("%.", "_"))
+				local fileName = ("%s/%s_%s.lua"):format(folder, safeName, obj.ClassName)
+				pcall(env.writefile, fileName, source)
+				count = count + 1
+				batchCount = batchCount + 1
+				
+				-- Throttle to prevent freeze
+				if batchCount >= FAF.Config.BatchSize then
+					print(("FAF: [%d] %s (pausing...)"):format(count, obj.Name))
+					task.wait(FAF.Config.BatchDelay)
+					batchCount = 0
+				else
+					print(("FAF: [%d] %s"):format(count, obj.Name))
+				end
 			end
 		end
 	end
 	
-	return info
+	print(("FAF: ✓ Saved %d scripts from %s to '%s'"):format(count, serviceName, folder))
+	return true, count, folder
 end
 
--- Search for instances by name
-DexAPI.FindInstance = function(name, parent)
-	parent = parent or game
+-- Find and dump scripts by name pattern
+FAF.Find = function(pattern, saveAll)
 	local results = {}
 	
-	for _, obj in pairs(parent:GetDescendants()) do
-		if obj.Name:lower():find(name:lower()) then
-			table.insert(results, obj)
-		end
-	end
-	
-	print(("DexAPI: Found %d instances matching '%s'"):format(#results, name))
-	return results
-end
-
--- Search for scripts by name and auto-decompile
-DexAPI.FindScript = function(name, parent, sendToPC)
-	parent = parent or game
-	local results = {}
-	local scriptsArray = {}
-	
-	for _, obj in pairs(parent:GetDescendants()) do
-		if obj:IsA("LuaSourceContainer") and obj.Name:lower():find(name:lower()) and env.isViableDecompileScript(obj) then
+	for _, obj in pairs(game:GetDescendants()) do
+		if obj:IsA("LuaSourceContainer") and obj.Name:lower():find(pattern:lower()) and env.isViableDecompileScript(obj) and not isFromCoreService(obj) then
 			local success, source = pcall(env.decompile, obj)
 			if success and source then
 				table.insert(results, {
 					Instance = obj,
 					Source = source,
-					ClassName = obj.ClassName,
-					FullName = obj:GetFullName()
+					Name = obj.Name,
+					FullName = obj:GetFullName(),
+					ClassName = obj.ClassName
 				})
-				table.insert(scriptsArray, {
-					name = obj.Name,
-					source = source,
-					type = obj.ClassName,
-					full_name = obj:GetFullName()
-				})
-				print(("DexAPI: Found script: %s (%s)"):format(obj:GetFullName(), obj.ClassName))
+				print(("FAF: Found: %s (%s)"):format(obj:GetFullName(), obj.ClassName))
 			end
 		end
 	end
 	
-	print(("DexAPI: Found %d scripts matching '%s'"):format(#results, name))
+	print(("FAF: Found %d scripts matching '%s'"):format(#results, pattern))
 	
-	-- Send to PC if enabled
-	if sendToPC ~= false and #scriptsArray > 0 then
-		SendToPC({
-			action = "save_multiple",
-			scripts = scriptsArray,
-			place_id = game.PlaceId
-		})
+	-- Save all if requested
+	if saveAll and #results > 0 and env.writefile then
+		local folder = ("FarmAFish_Search_%s"):format(cleanFileName(pattern))
+		ensureFolder(folder)
+		
+		for i, result in pairs(results) do
+			local fileName = ("%s/%s_%s.lua"):format(folder, cleanFileName(result.FullName:gsub("%.", "_")), result.ClassName)
+			pcall(env.writefile, fileName, result.Source)
+		end
+		print(("FAF: ✓ Saved %d scripts to '%s'"):format(#results, folder))
 	end
 	
 	return results
 end
 
--- Get remote events and functions
-DexAPI.GetRemotes = function(parent)
-	parent = parent or game
-	local remotes = {
-		RemoteEvents = {},
-		RemoteFunctions = {},
-		BindableEvents = {},
-		BindableFunctions = {}
+-- Get Farm a Fish specific modules (Fishing, Inventory, etc.)
+FAF.GetCoreModules = function()
+	local coreModules = {
+		"Fishing",
+		"Fish",
+		"Inventory",
+		"Shop",
+		"Farm",
+		"Rod",
+		"Player",
+		"Character"
 	}
 	
-	for _, obj in pairs(parent:GetDescendants()) do
-		if obj:IsA("RemoteEvent") then
-			table.insert(remotes.RemoteEvents, obj)
-		elseif obj:IsA("RemoteFunction") then
-			table.insert(remotes.RemoteFunctions, obj)
-		elseif obj:IsA("BindableEvent") then
-			table.insert(remotes.BindableEvents, obj)
-		elseif obj:IsA("BindableFunction") then
-			table.insert(remotes.BindableFunctions, obj)
-		end
+	local folder = ("FarmAFish_Core_%s"):format(getDateString())
+	if env.makefolder then
+		ensureFolder(folder)
 	end
 	
-	print(("DexAPI: Found %d RemoteEvents, %d RemoteFunctions"):format(#remotes.RemoteEvents, #remotes.RemoteFunctions))
-	return remotes
-end
-
--- Quick access to get and copy a script
-DexAPI.QuickGet = function(scriptPath)
-	local script = game
-	for _, part in pairs(scriptPath:split(".")) do
-		script = script:FindFirstChild(part)
-		if not script then
-			warn("DexAPI.QuickGet: Path not found")
-			return nil
-		end
-	end
-	
-	return DexAPI.GetScript(script)
-end
-
--- Save all scripts in a location
-DexAPI.SaveAllScripts = function(parent, folderName)
-	parent = parent or game
-	folderName = folderName or ("DexScripts_" .. game.PlaceId)
-	
-	if not env.writefile or not env.makefolder then
-		warn("DexAPI.SaveAllScripts: File operations not available")
-		return false
-	end
-	
-	pcall(env.makefolder, folderName)
-	
+	local found = {}
 	local count = 0
-	for _, obj in pairs(parent:GetDescendants()) do
-		if obj:IsA("LuaSourceContainer") and env.isViableDecompileScript(obj) then
-			local success, source = pcall(env.decompile, obj)
-			if success and source then
-				local fileName = ("%s/%s_%s.lua"):format(folderName, env.parsefile(obj:GetFullName()), obj.ClassName)
-				pcall(env.writefile, fileName, source)
-				count = count + 1
-				print(("DexAPI: [%d] Saved %s"):format(count, fileName))
+	
+	print("FAF: Searching for Farm a Fish core modules...")
+	
+	for _, moduleName in pairs(coreModules) do
+		for _, obj in pairs(game:GetDescendants()) do
+			if obj:IsA("ModuleScript") and obj.Name:find(moduleName) and env.isViableDecompileScript(obj) and not isFromCoreService(obj) then
+				local success, source = pcall(env.decompile, obj)
+				if success and source then
+					count = count + 1
+					table.insert(found, {
+						Name = obj.Name,
+						FullName = obj:GetFullName(),
+						Source = source
+					})
+					
+					if env.writefile then
+						local fileName = ("%s/%s_%s.lua"):format(folder, cleanFileName(obj:GetFullName():gsub("%.", "_")), "ModuleScript")
+						pcall(env.writefile, fileName, source)
+					end
+					
+					print(("FAF: [%d] ✓ %s"):format(count, obj:GetFullName()))
+				end
 			end
 		end
 	end
 	
-	print(("DexAPI: Saved %d scripts to folder '%s'"):format(count, folderName))
-	return true, count
+	print(("FAF: ✓ Found %d core modules, saved to '%s'"):format(count, folder))
+	return found, folder
 end
 
--- Get bytecode of a script
-DexAPI.GetBytecode = function(script)
-	if not script or not script:IsA("LuaSourceContainer") then
-		warn("DexAPI.GetBytecode: Invalid script object")
-		return nil
-	end
+-- Get remote events and functions
+FAF.GetRemotes = function()
+	local remotes = {
+		RemoteEvents = {},
+		RemoteFunctions = {}
+	}
 	
-	if not env.getscriptbytecode then
-		warn("DexAPI.GetBytecode: getscriptbytecode not available")
-		return nil
-	end
-	
-	local success, bytecode = pcall(env.getscriptbytecode, script)
-	if success and bytecode then
-		if env.setclipboard then
-			pcall(env.setclipboard, bytecode)
-			print("DexAPI: Bytecode copied to clipboard!")
+	for _, obj in pairs(game:GetDescendants()) do
+		if not isFromCoreService(obj) then
+			if obj:IsA("RemoteEvent") then
+				table.insert(remotes.RemoteEvents, obj)
+			elseif obj:IsA("RemoteFunction") then
+				table.insert(remotes.RemoteFunctions, obj)
+			end
 		end
-		return bytecode
+	end
+	
+	print(("FAF: Found %d RemoteEvents, %d RemoteFunctions"):format(#remotes.RemoteEvents, #remotes.RemoteFunctions))
+	return remotes
+end
+
+-- Quick path access
+FAF.Get = function(path)
+	local current = game
+	for _, part in pairs(path:split(".")) do
+		current = current:FindFirstChild(part)
+		if not current then
+			warn(("FAF.Get: Path not found at '%s'"):format(part))
+			return nil
+		end
+	end
+	
+	if current:IsA("LuaSourceContainer") then
+		return FAF.GetScript(current, false)
 	else
-		warn("DexAPI.GetBytecode: Failed to get bytecode")
-		return nil
+		return current
 	end
 end
 
--- Print API help
-DexAPI.Help = function()
+-- Print help
+FAF.Help = function()
 	print([[
 ========================================
-DexAPI - Enhanced Dex with PC Integration
+Farm a Fish Decompiler - ZenX Studio
 ========================================
 
-PC SERVER COMMANDS (Run in VS Code):
-  python dex_server.py          - Start server
-  .\dex_client.ps1              - Manage received scripts
+QUICK DUMP COMMANDS:
+  FAF.DumpAll()              - Dump ALL game scripts (organized by service)
+  FAF.DumpService("name")    - Dump specific service
+                              Examples: "ReplicatedStorage", "Workspace"
+  FAF.GetCoreModules()       - Get Fishing, Fish, Inventory, Shop modules
 
-CONFIGURATION:
-  DexAPI.Config.AutoSendToPC = true/false
-  DexAPI.Config.ServerURL = "http://localhost:8765"
-  DexAPI.Config.AutoCopyClipboard = true/false
+SINGLE SCRIPT:
+  FAF.GetScript(script)      - Decompile & copy to clipboard
+  FAF.GetScript(script,true) - Decompile & save to file
+  FAF.Save(script)           - Save script to FarmAFish folder
+  FAF.Save(script, "name")   - Save with custom name
 
-FUNCTIONS (Auto-send to PC):
-  DexAPI.GetScript(script, sendToPC)
-    - Decompile script and send to PC
-    - Auto copies to clipboard
-    
-  DexAPI.GetAllScripts(parent, sendToPC)
-    - Get all scripts from parent and send to PC
-    - Returns: table of decompiled scripts
-    
-  DexAPI.FindScript(name, parent, sendToPC)
-    - Find and decompile scripts by name, send to PC
-    - Returns: array of matching scripts
+SEARCH:
+  FAF.Find("pattern")        - Find scripts by name
+  FAF.Find("pattern", true)  - Find and save all matches
 
-OTHER FUNCTIONS:
-  DexAPI.SaveScript(script, customName)
-  DexAPI.SaveAllScripts(parent, folderName)
-  DexAPI.GetFunctionInfo(func)
-  DexAPI.FindInstance(name, parent)
-  DexAPI.GetRemotes(parent)
-  DexAPI.QuickGet(path)
-  DexAPI.GetBytecode(script)
+UTILITY:
+  FAF.Get("path.to.script")  - Quick decompile by path
+  FAF.GetRemotes()           - List all RemoteEvents/Functions
 
 EXAMPLES:
-  -- Decompile and send to PC
-  DexAPI.GetScript(game.Workspace.Script)
+  -- Dump everything
+  FAF.DumpAll()
   
-  -- Get all scripts from ReplicatedStorage
-  DexAPI.GetAllScripts(game.ReplicatedStorage)
+  -- Dump just ReplicatedStorage
+  FAF.DumpService("ReplicatedStorage")
   
-  -- Find and send specific scripts
-  DexAPI.FindScript("Remote")
+  -- Find all Fishing-related scripts
+  FAF.Find("Fishing", true)
   
-  -- Disable auto-send temporarily
-  DexAPI.Config.AutoSendToPC = false
-  DexAPI.GetScript(script) -- Won't send to PC
+  -- Get Farm a Fish core modules
+  FAF.GetCoreModules()
   
-  -- Or use parameter
-  DexAPI.GetScript(script, false) -- Won't send
-  
-========================================
-HOW IT WORKS:
-1. Run 'python dex_server.py' in VS Code terminal
-2. Execute Dex in your Roblox executor
-3. Use DexAPI functions in executor console
-4. Scripts automatically appear in VS Code!
-5. Check with '.\dex_client.ps1' in VS Code
+  -- Quick get specific script
+  FAF.Get("ReplicatedStorage.Shared.Fishing")
+
+OUTPUT FOLDERS (in executor workspace):
+  FarmAFish_Dump_YYYY-MM-DD/
+  FarmAFish_ReplicatedStorage_YYYY-MM-DD/
+  FarmAFish_Core_YYYY-MM-DD/
+  FarmAFish_Search_pattern/
 ========================================
 ]])
 end
 
 print("========================================")
-print("🚀 DexAPI Loaded with PC Integration!")
-print("📡 Server: " .. DexAPI.Config.ServerURL)
-print("💾 Auto-send to PC: " .. tostring(DexAPI.Config.AutoSendToPC))
-print("Type 'DexAPI.Help()' for full commands")
+print("🎮 Farm a Fish Decompiler Loaded!")
+print("📁 Output: executor workspace folder")
+print("💡 Type 'FAF.Help()' for commands")
+print("⚡ Quick dump: FAF.DumpAll()")
 print("========================================")
+
+FAF.DumpAll()
