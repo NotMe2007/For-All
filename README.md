@@ -65,7 +65,7 @@ loadstring(game:HttpGet("https://api.junkie-development.de/api/v1/luascripts/pub
 Comprehensive automation script for Ultra Unfair with GUI.
 
 ```lua
-loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/main/Games/UltraUnfair/UU_Main.lua"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/main/PB%20Unfair/UU_Main.lua"))()
 ```
 
 **Features:**
