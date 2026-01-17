@@ -190,7 +190,7 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/mai
 
 ### 🔦 Descent
 
-Visual enhancement script for Descent game.
+Visual enhancement script for the Descent game.
 
 ```lua
 loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/main/Games/Descent/Descent.lua"))()
@@ -210,31 +210,6 @@ External hub loader for various games.
 ```lua
 loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/main/Games/Misc/hohohub.lua"))()
 ```
-
----
-
-## 📋 Available Mutations Reference
-
-For scripts that support mutation filtering:
-
-| Mutation | Description |
-|----------|-------------|
-| Golden | Gold-colored variant |
-| Diamond | Diamond-colored variant |
-| Void | Dark/void variant |
-| Rainbow | Rainbow-colored variant |
-| Albino | White/albino variant |
-| Colossal | Large size variant |
-| Tiny | Small size variant |
-| Electric | Electric effect variant |
-| Frozen | Ice/frozen variant |
-| Fiery | Fire effect variant |
-| Spectral | Ghost-like variant |
-| Cosmic | Space-themed variant |
-| Christmas | Holiday event variant |
-| Alien | Alien event variant |
-
----
 
 ## 🚧 Upcoming Games
 
