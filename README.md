@@ -50,13 +50,14 @@ loadstring(game:HttpGet("https://api.junkie-development.de/api/v1/luascripts/pub
 ```
 
 **Features:**
-- Autofarm with auto zone selection
-- Kill Aura with configurable range
-- Auto Bank & Auto Sell
-- Tower/Dungeon automation (Atlantis, Grave, Prison, Klaus, Temple of Ruin)
-- World Events automation
-- Pet Aura
-- Auto Doge rewards
+- Autofarm with auto zone selection 
+- Kill Aura with configurable range (beta)
+- Auto Bank & Auto Sell (beta)
+- Tower/Dungeon automation (Atlantis, Grave, Prison, Klaus, Temple of Ruin) (beta)
+- World Events automation (beta)
+- Pet Aura (beta)
+- Auto Doge (beta)
+- Auto claim rewards
 
 ---
 
@@ -71,12 +72,12 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/mai
 **Features:**
 - **Auto Spin** - Automatic ability rolling with level filtering
 - **Kill Aura** - Combat automation with hitbox extension
-- **Auto Farm** - Zone-based farming with boss priority
-- **Trait Reroll** - Target specific traits (Immortal, The One, etc.)
-- **Smart Roll** - Gene rolling with cycle detection
-- **Auto Stats** - Automatic stat point allocation
-- **Auto Aura** - Aura rolling and duplicate management
-- **Auto Saitama** - Fist rolling and auto-fuse system
+- **Auto Farm** - Zone-based farming with boss priority (beta)
+- **Trait Reroll** - Target specific traits (Immortal, The One, etc.) (beta)
+- **Smart Roll** - Gene rolling with cycle detection 
+- **Auto Stats** - Automatic stat point allocation (beta)
+- **Auto Aura** - Aura rolling and duplicate management (beta)
+- **Auto Saitama** - Fist rolling and auto-fuse system (beta)
 
 ---
 
@@ -96,24 +97,24 @@ _G.FAF_TOGGLES = _G.FAF_TOGGLES or {}
 local FAF_TOGGLE_DEFAULTS = {
     AutoCollectFish = true,      -- Auto collect fish from nets
     AutoSellFish = true,         -- Auto sell fish
-    AutoBuyBait = false,         -- Auto buy bait from shop
-    AutoPlaceBait = false,       -- Auto place bait
+    AutoBuyBait = false,         -- Auto buy bait from shop (beta)
+    AutoPlaceBait = false,       -- Auto place bait (beta)
     AutoOpenBaitPacks = true,    -- Auto open bait packs
-    SmartBaitManagement = false, -- Smart bait optimization
+    SmartBaitManagement = false, -- Smart bait optimization (beta)
     AutoCollectCrates = true,    -- Auto collect crates
     AutoCollectPickups = true,   -- Auto collect pickups
     EventAutoFeed = false,       -- Auto feed ALL event NPCs
     AlienScientistFeed = false,  -- Auto feed Alien Scientist ONLY
-    AntiStaff = true,            -- Anti-staff protection
-    AntiAFK = true,              -- Anti-AFK protection
-    AutoFeedPets = true,         -- Auto feed pets
-    AutoBestPet = true,          -- Auto swap to best pets
-    AutoEggs = false,            -- Auto egg management
-    AutoUseGear = false,         -- Auto use gear
-    AutoCraft = false,           -- Auto crafting system
-    AutoRedeemCodes = true,      -- Auto redeem codes on startup
-    AutoMerchant = false,        -- Auto buy from travelling merchant
-    RandomizeGUIName = true,     -- Randomize GUI name for security
+    AntiStaff = true,            -- Anti-staff protection (beta)
+    AntiAFK = true,              -- Anti-AFK protection (beta)
+    AutoFeedPets = true,         -- Auto feed pets 
+    AutoBestPet = true,          -- Auto swap to best pets (beta)
+    AutoEggs = false,            -- Auto egg management (beta)
+    AutoUseGear = false,         -- Auto use gear (beta)
+    AutoCraft = false,           -- Auto crafting system (beta)
+    AutoRedeemCodes = true,      -- Auto redeem codes on startup 
+    AutoMerchant = false,        -- Auto buy from travelling merchant (beta)
+    RandomizeGUIName = true,     -- Randomize GUI name for security (beta) 
 }
 
 for key, defaultValue in pairs(FAF_TOGGLE_DEFAULTS) do
