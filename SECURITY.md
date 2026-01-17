@@ -1,16 +1,25 @@
 # Security Policy
 
-## Supported Versions latest (loadstring) 
+## Supported Versions
 
+Latest versions are always recommended (use loadstrings for auto-updates).
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 0.0.0:> | :white_check_mark: |
-
+| Latest  | ✅ Supported       |
+| Older   | ❌ Not Recommended |
 
 ## Reporting a Vulnerability
 
-Please contact us via Discord, tell us how you found this how to do it again 
-We would love to patch our scripts, and we appreciate your assistance.
+If you discover a security vulnerability, please contact us via Discord.
 
-Do not use older cache versions as they might be detected and can get you banned
+**Please include:**
+- How you found the vulnerability
+- Steps to reproduce it
+- Any potential impact
+
+We appreciate your assistance in keeping our scripts safe and will work to patch issues promptly.
+
+## ⚠️ Important Notice
+
+**Do not use older cached versions** as they may be detected and could result in bans. Always use the latest loadstring to ensure you have the most recent updates and security patches.

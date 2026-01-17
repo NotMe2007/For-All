@@ -2,6 +2,8 @@
 
 Universal Roblox script collection with smart game detection and organized folder structure.
 
+---
+
 ## 📁 Repository Structure
 
 ```
@@ -18,9 +20,12 @@ For-All/
 └── README.md
 ```
 
+---
+
 ## 🔧 Universal Tools
 
 ### Dex++ (Universal Edition)
+
 Smart debugging tool that auto-detects the current game and organizes output accordingly.
 
 ```lua
@@ -32,49 +37,63 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/mai
 - Organizes decompiled scripts by game name
 - Works with ANY Roblox game
 
+---
+
 ## 🎮 Game Scripts
 
-### 🚀 World Zero
+### 🌍 World Zero
+
+A comprehensive script hub for World Zero with anticheat bypass and multiple features.
 
 ```lua
 loadstring(game:HttpGet("https://api.junkie-development.de/api/v1/luascripts/public/ef2cd821474d60882ccc855716ff1a11c1bcfa0b77cbdffaf96f6a7aa8ffd5a2/download"))()
 ```
 
-### 🚀 Ultra Unfair
+**Features:**
+- Autofarm with auto zone selection
+- Kill Aura with configurable range
+- Auto Bank & Auto Sell
+- Tower/Dungeon automation (Atlantis, Grave, Prison, Klaus, Temple of Ruin)
+- World Events automation
+- Pet Aura
+- Auto Doge rewards
+
+---
+
+### ⚔️ Ultra Unfair
+
+Comprehensive automation script for Ultra Unfair with GUI.
 
 ```lua
 loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/main/Games/UltraUnfair/UU_Main.lua"))()
 ```
 
-### 🚀 Farm A Fish
+**Features:**
+- **Auto Spin** - Automatic ability rolling with level filtering
+- **Kill Aura** - Combat automation with hitbox extension
+- **Auto Farm** - Zone-based farming with boss priority
+- **Trait Reroll** - Target specific traits (Immortal, The One, etc.)
+- **Smart Roll** - Gene rolling with cycle detection
+- **Auto Stats** - Automatic stat point allocation
+- **Auto Aura** - Aura rolling and duplicate management
+- **Auto Saitama** - Fist rolling and auto-fuse system
+
+---
+
+### 🐟 Farm A Fish
+
+Advanced fishing automation with extensive customization options.
 
 ```lua
-
 -- ═══════════════════════════════════════════════════════════════════════════
--- _G.FAF_SETTINGS - PUBLIC SETTINGS (Set BEFORE running script or modify anytime)
--- Users can share these settings easily by copying/pasting this table
--- Pre-set your settings BEFORE the loadstring, they will be saved yey
+-- _G.FAF_SETTINGS & _G.FAF_TOGGLES - Pre-configure before running
 -- ═══════════════════════════════════════════════════════════════════════════
 
--- Initialize table if not exists (preserves user settings from loadstring)
 _G.FAF_SETTINGS = _G.FAF_SETTINGS or {}
-
--- ═══════════════════════════════════════════════════════════════════════════
--- _G.FAF_TOGGLES - EXTERNAL FEATURE TOGGLES (Anti-detection friendly)
--- Set these BEFORE or AFTER running script to enable/disable features externally
--- All toggles are checked in real-time by their respective modules
--- ═══════════════════════════════════════════════════════════════════════════
-
 _G.FAF_TOGGLES = _G.FAF_TOGGLES or {}
 
--- Default toggle states (only applied if not already set)
+-- Toggle defaults (set before loadstring to customize)
 local FAF_TOGGLE_DEFAULTS = {
-    -- ═══════════════════════════════════════════════════════════════
-    -- MASTER TOGGLES - Control all features externally
-    -- Set any of these to false to instantly disable that module
-    -- These defaults are used when script first runs
-    -- ═══════════════════════════════════════════════════════════════
-    
     AutoCollectFish = true,      -- Auto collect fish from nets
     AutoSellFish = true,         -- Auto sell fish
     AutoBuyBait = false,         -- Auto buy bait from shop
@@ -83,8 +102,8 @@ local FAF_TOGGLE_DEFAULTS = {
     SmartBaitManagement = false, -- Smart bait optimization
     AutoCollectCrates = true,    -- Auto collect crates
     AutoCollectPickups = true,   -- Auto collect pickups
-    EventAutoFeed = false,       -- Auto feed ALL event NPCs (Santa, Elf, Robot, Alien)
-    AlienScientistFeed = false,  -- Auto feed Alien Scientist ONLY (protects alien fish from selling)
+    EventAutoFeed = false,       -- Auto feed ALL event NPCs
+    AlienScientistFeed = false,  -- Auto feed Alien Scientist ONLY
     AntiStaff = true,            -- Anti-staff protection
     AntiAFK = true,              -- Anti-AFK protection
     AutoFeedPets = true,         -- Auto feed pets
@@ -94,152 +113,141 @@ local FAF_TOGGLE_DEFAULTS = {
     AutoCraft = false,           -- Auto crafting system
     AutoRedeemCodes = true,      -- Auto redeem codes on startup
     AutoMerchant = false,        -- Auto buy from travelling merchant
-    
-    -- ═══════════════════════════════════════════════════════════════
-    -- SECURITY - GUI Name Randomization
-    -- ═══════════════════════════════════════════════════════════════
-    RandomizeGUIName = true,    -- Randomize GUI name to avoid detection
+    RandomizeGUIName = true,     -- Randomize GUI name for security
 }
 
--- Apply toggle defaults only for toggles not already defined by user
 for key, defaultValue in pairs(FAF_TOGGLE_DEFAULTS) do
     if _G.FAF_TOGGLES[key] == nil then
         _G.FAF_TOGGLES[key] = defaultValue
     end
 end
 
--- Default settings (only applied if user hasn't set them)
+-- Settings defaults
 local FAF_DEFAULTS = {
-    -- ═══════════════════════════════════════════════════════════════
-    -- AUTO PICKUP FISH MUTATION FILTERS
-    -- Control which fish to pick up based on mutations
-    -- ═══════════════════════════════════════════════════════════════
+    -- Mutation filters for auto pickup
+    AutoPickupOnlyMutations = {"Alien"},  -- Only pickup these mutations
+    AutoPickupExcludeMutations = {},       -- Exclude these mutations
     
-    -- Only pickup fish with THESE mutations (leave empty {} to pickup all)
-    -- Special option: {"All"} will pickup ALL mutations but still respect exclude filter
-    -- Available mutations:
-    --   "All" (special: keeps all but still checks exclude filter)
-    --   "Golden", "Diamond", "Void", "Rainbow", "Albino", "Colossal",
-    --   "Tiny", "Electric", "Frozen", "Fiery", "Spectral", "Cosmic",
-    --   "Christmas", "Alien"
-    -- Example: {"Golden", "Diamond"} will ONLY pickup Golden/Diamond fish
-    -- Example: {"All"} will pickup all fish, but exclude filter still applies
-    AutoPickupOnlyMutations = {"Alien"},
+    -- Auto sell exclusions
+    DontSellMutations = {"Christmas", "Alien"},
+    DontSellBaitTypes = {"Christmas", "Robot", "Alien"},
     
-    -- EXCLUDE fish with these mutations from pickup
-    -- This filter is ALWAYS checked, even when AutoPickupOnlyMutations = {"All"}
-    -- Available mutations:
-    --   "Golden", "Diamond", "Void", "Rainbow", "Albino", "Colossal",
-    --   "Tiny", "Electric", "Frozen", "Fiery", "Spectral", "Cosmic",
-    --   "Christmas", "Alien"
-    -- Example: {"Tiny"} will pickup all fish EXCEPT Tiny mutation
-    AutoPickupExcludeMutations = {},
-    
-    -- ═══════════════════════════════════════════════════════════════
-    -- AUTO SELL MUTATION EXCLUSIONS
-    -- Fish with these mutations will NEVER be sold
-    -- ═══════════════════════════════════════════════════════════════
-    
-    -- Don't sell fish with these mutations (add your own!)
-    -- Available mutations:
-    --   "Golden", "Diamond", "Void", "Rainbow", "Albino", "Colossal",
-    --   "Tiny", "Electric", "Frozen", "Fiery", "Spectral", "Cosmic",
-    --   "Christmas", "Alien"
-    DontSellMutations = {
-        "Christmas",  -- Keep for Santa NPC
-        "Alien",      -- Keep for Alien NPC
-    },
-    
-    -- Don't sell fish from these bait types
-    -- Available bait types:
-    --   Regular: "Starter", "Novice", "Reef", "DeepSea", "Koi", "River",
-    --            "Puffer", "Seal", "Glo", "Ray", "Octopus", "Axolotl",
-    --            "Jelly", "Whale", "Shark"
-    --   Event:   "Christmas", "Robot", "Alien"
-    DontSellBaitTypes = {
-        "Christmas",
-        "Robot",
-        "Alien",
-    },
-    
-    -- ═══════════════════════════════════════════════════════════════
-    -- AUTO CRAFT SYSTEM
-    -- Items to automatically craft (will craft dependencies first!)
-    -- ═══════════════════════════════════════════════════════════════
-    
-    -- Enable/disable auto crafting
+    -- Auto craft settings
     AutoCraftEnabled = false,
-    
-    -- Items to auto craft (priority order - first item has highest priority)
-    -- Use exact item names from the game
-    -- Available craftable items:
-    --   Gears: "AdvancedAutoFeeder", "DiamondCookie", "YolkBreaker", 
-    --          "EggHatcher", "TimeJumper", "NetRetractor", "ShieldLock",
-    --          "FoodTray"
-    -- Example: {"DiamondCookie", "YolkBreaker", "AdvancedAutoFeeder"}
     AutoCraftItems = {},
-    
-    -- Interval between craft attempts (seconds)
     AutoCraftInterval = 10,
-    
-    -- Auto-complete existing crafts before starting new ones
     AutoCompleteCrafts = true,
-    
-    -- Auto-submit items when correct ingredients are equipped
     AutoSubmitIngredients = true,
     
-    -- ═══════════════════════════════════════════════════════════════
-    -- TRAVELLING MERCHANT
-    -- Auto-buy items from travelling merchant when available
-    -- ═══════════════════════════════════════════════════════════════
-    
-    -- Buy all available merchant items
+    -- Merchant settings
     MerchantBuyAll = false,
-    
-    -- Specific items to buy (empty = buy nothing unless BuyAll is true)
-    -- Use item stock IDs like: "bait_Octopus", "egg_Golden", etc.
     MerchantBuyItems = {},
-    
-    -- Maximum coins to spend per merchant visit (0 = unlimited)
     MerchantMaxSpend = 0,
     
-    -- ═══════════════════════════════════════════════════════════════
-    -- AUTO TELEPORT TO LOCATIONS
-    -- Automatically teleport to relevant locations before actions
-    -- ═══════════════════════════════════════════════════════════════
-    
-    -- Enable automatic teleportation to locations
+    -- Teleport settings
     AutoTeleportToLocations = false,
-    
-    -- Automatically return to pond after completing actions
     AutoReturnToPond = true,
     
-    -- ═══════════════════════════════════════════════════════════════
-    -- CRAFT PROTECTION
-    -- Don't sell items that are needed for crafting
-    -- ═══════════════════════════════════════════════════════════════
-    
-    -- Protect items needed for crafting from being sold
+    -- Craft protection
     ProtectCraftMaterials = true,
 }
 
--- Apply defaults only for settings not already defined by user
 for key, defaultValue in pairs(FAF_DEFAULTS) do
     if _G.FAF_SETTINGS[key] == nil then
         _G.FAF_SETTINGS[key] = defaultValue
     end
 end
+
 loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/main/Games/FarmAFish/FarmAFish.lua"))()
 ```
 
-### 😎 Upcoming
+**Features:**
+- Auto collect fish, crates, and pickups
+- Mutation-based filtering (Golden, Diamond, Alien, etc.)
+- Smart sell system with exclusion lists
+- Event NPC feeding (Santa, Elf, Robot, Alien)
+- Auto crafting with ingredient protection
+- Travelling merchant automation
+- Anti-staff and Anti-AFK protection
+
+---
+
+### 🎁 Pet Simulator 99 - Present Collector
+
+Automatically collects hidden holiday presents.
+
+```lua
+loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/main/Games/PetSim99/PS99Present.lua"))()
+```
+
+**Features:**
+- Teleports to all hidden presents
+- Auto-clicks presents for collection
+- Includes special "Present" detection
+
+---
+
+### 🔦 Descent
+
+Visual enhancement script for Descent game.
+
+```lua
+loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/main/Games/Descent/Descent.lua"))()
+```
+
+**Features:**
+- Item drop highlighting
+- Full bright lighting (removes darkness)
+- Auto-refresh every 10 seconds
+
+---
+
+### 🎄 HoHo Hub (Miscellaneous)
+
+External hub loader for various games.
+
+```lua
+loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/main/Games/Misc/hohohub.lua"))()
+```
+
+---
+
+## 📋 Available Mutations Reference
+
+For scripts that support mutation filtering:
+
+| Mutation | Description |
+|----------|-------------|
+| Golden | Gold-colored variant |
+| Diamond | Diamond-colored variant |
+| Void | Dark/void variant |
+| Rainbow | Rainbow-colored variant |
+| Albino | White/albino variant |
+| Colossal | Large size variant |
+| Tiny | Small size variant |
+| Electric | Electric effect variant |
+| Frozen | Ice/frozen variant |
+| Fiery | Fire effect variant |
+| Spectral | Ghost-like variant |
+| Cosmic | Space-themed variant |
+| Christmas | Holiday event variant |
+| Alien | Alien event variant |
+
+---
+
+## 🚧 Upcoming Games
 
 - Soul Eater: Resonance
-- Creatures of Senaria
+- Creatures of Sonaria
 - Flashpoint
 - Death Train
 - Shindo Life
 - Monster Slayer
-- Break your bones
+- Break Your Bones
 
-`Based on Prometheus by Elias Oelschner, https://github.com/prometheus-lua/Prometheus`
+---
+
+## 📜 Credits
+
+`Based on Prometheus by Elias Oelschner` - [https://github.com/prometheus-lua/Prometheus](https://github.com/prometheus-lua/Prometheus)
+
