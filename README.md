@@ -49,6 +49,7 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/mai
 ### 🚀 Farm A Fish
 
 ```lua
+
 -- ═══════════════════════════════════════════════════════════════════════════
 -- _G.FAF_SETTINGS - PUBLIC SETTINGS (Set BEFORE running script or modify anytime)
 -- Users can share these settings easily by copying/pasting this table
@@ -71,24 +72,28 @@ local FAF_TOGGLE_DEFAULTS = {
     -- ═══════════════════════════════════════════════════════════════
     -- MASTER TOGGLES - Control all features externally
     -- Set any of these to false to instantly disable that module
+    -- These defaults are used when script first runs
     -- ═══════════════════════════════════════════════════════════════
     
-    AutoCollectFish = true,     -- Auto collect fish from nets
-    AutoSellFish = true,        -- Auto sell fish
-    AutoBuyBait = true,         -- Auto buy bait from shop
+    AutoCollectFish = true,      -- Auto collect fish from nets
+    AutoSellFish = true,         -- Auto sell fish
+    AutoBuyBait = false,         -- Auto buy bait from shop
     AutoPlaceBait = false,       -- Auto place bait
-    AutoOpenBaitPacks = true,   -- Auto open bait packs
+    AutoOpenBaitPacks = true,    -- Auto open bait packs
     SmartBaitManagement = false, -- Smart bait optimization
-    AutoCollectCrates = false,   -- Auto collect crates
-    AutoCollectPickups = true,  -- Auto collect pickups
-    EventAutoFeed = true,       -- Auto feed event NPCs
-    AntiStaff = true,           -- Anti-staff protection
-    AntiAFK = true,             -- Anti-AFK protection
-    AutoFeedPets = true,        -- Auto feed pets
-    AutoBestPet = true,         -- Auto swap to best pets
-    AutoEggs = true,            -- Auto egg management
+    AutoCollectCrates = true,    -- Auto collect crates
+    AutoCollectPickups = true,   -- Auto collect pickups
+    EventAutoFeed = false,       -- Auto feed ALL event NPCs (Santa, Elf, Robot, Alien)
+    AlienScientistFeed = false,  -- Auto feed Alien Scientist ONLY (protects alien fish from selling)
+    AntiStaff = true,            -- Anti-staff protection
+    AntiAFK = true,              -- Anti-AFK protection
+    AutoFeedPets = true,         -- Auto feed pets
+    AutoBestPet = true,          -- Auto swap to best pets
+    AutoEggs = false,            -- Auto egg management
     AutoUseGear = false,         -- Auto use gear
     AutoCraft = false,           -- Auto crafting system
+    AutoRedeemCodes = true,      -- Auto redeem codes on startup
+    AutoMerchant = false,        -- Auto buy from travelling merchant
     
     -- ═══════════════════════════════════════════════════════════════
     -- SECURITY - GUI Name Randomization
@@ -119,7 +124,7 @@ local FAF_DEFAULTS = {
     --   "Christmas", "Alien"
     -- Example: {"Golden", "Diamond"} will ONLY pickup Golden/Diamond fish
     -- Example: {"All"} will pickup all fish, but exclude filter still applies
-    AutoPickupOnlyMutations = {},
+    AutoPickupOnlyMutations = {"Alien"},
     
     -- EXCLUDE fish with these mutations from pickup
     -- This filter is ALWAYS checked, even when AutoPickupOnlyMutations = {"All"}
@@ -143,11 +148,6 @@ local FAF_DEFAULTS = {
     DontSellMutations = {
         "Christmas",  -- Keep for Santa NPC
         "Alien",      -- Keep for Alien NPC
-        "Golden",     -- Valuable mutations
-        "Diamond",
-        "Void",
-        "Cosmic",
-        "Rainbow",
     },
     
     -- Don't sell fish from these bait types
@@ -182,6 +182,38 @@ local FAF_DEFAULTS = {
     -- Interval between craft attempts (seconds)
     AutoCraftInterval = 10,
     
+    -- Auto-complete existing crafts before starting new ones
+    AutoCompleteCrafts = true,
+    
+    -- Auto-submit items when correct ingredients are equipped
+    AutoSubmitIngredients = true,
+    
+    -- ═══════════════════════════════════════════════════════════════
+    -- TRAVELLING MERCHANT
+    -- Auto-buy items from travelling merchant when available
+    -- ═══════════════════════════════════════════════════════════════
+    
+    -- Buy all available merchant items
+    MerchantBuyAll = false,
+    
+    -- Specific items to buy (empty = buy nothing unless BuyAll is true)
+    -- Use item stock IDs like: "bait_Octopus", "egg_Golden", etc.
+    MerchantBuyItems = {},
+    
+    -- Maximum coins to spend per merchant visit (0 = unlimited)
+    MerchantMaxSpend = 0,
+    
+    -- ═══════════════════════════════════════════════════════════════
+    -- AUTO TELEPORT TO LOCATIONS
+    -- Automatically teleport to relevant locations before actions
+    -- ═══════════════════════════════════════════════════════════════
+    
+    -- Enable automatic teleportation to locations
+    AutoTeleportToLocations = false,
+    
+    -- Automatically return to pond after completing actions
+    AutoReturnToPond = true,
+    
     -- ═══════════════════════════════════════════════════════════════
     -- CRAFT PROTECTION
     -- Don't sell items that are needed for crafting
@@ -197,7 +229,6 @@ for key, defaultValue in pairs(FAF_DEFAULTS) do
         _G.FAF_SETTINGS[key] = defaultValue
     end
 end
-
 loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/main/Games/FarmAFish/FarmAFish.lua"))()
 ```
 
