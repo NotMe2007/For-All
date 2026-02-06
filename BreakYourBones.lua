@@ -19,7 +19,7 @@
 ]]
 
 -- Auto Re-execute on server hop
-local SCRIPT_URL = "https://raw.githubusercontent.com/YOUR_REPO/main/BreakYourBonesHub.lua"
+local SCRIPT_URL = "https://raw.githubusercontent.com/NotMe2007/For-All/refs/heads/main/BreakYourBones.lua"
 local ScriptSource = nil
 pcall(function()
     ScriptSource = game:HttpGet(SCRIPT_URL)
