@@ -58,11 +58,10 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/mai
 - Anti-cheat bypass and protection systems
 - Ray field UI with extensive customization options
 
----
-
 ```lua
 loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/main/Games/WorldZero/WorldZero_Obfuscated.lua"))()
 ```
+---
 
 ### ⚡ Break Your Bones
 
@@ -81,11 +80,10 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/mai
 - Spin Speed Slider (30-120 deg/frame)
 - Material hunting with target modifiers
 
----
-
 ```lua
 loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/main/BreakYourBones.lua"))()
 ```
+---
 
 ### ⛏️ Pickaxe Simulator
 
@@ -101,24 +99,19 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/mai
 - Achievement claiming
 - Rayfield UI with full customization
 
----
-
 ```lua
 loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/main/Pickaxe%20Sim.lua"))()
 ```
+---
 
-### 🚗 Tank Simulator (BETA)
+### 🚗 Tank Simulator (BETA) (Patched) Will fix 
 
 Complete Tank Simulator automation with combat enhancement and utility features.
 
-```lua
-loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/main/TankSimulator_Script.lua"))()
-```
-
 **Features:**
 
-- Auto Fire with intelligent targeting
-- Auto Spin for mobility and evasion
+- Auto Fire with intelligent targeting 
+- Auto Spin 
 - Tank/Player ESP with visual indicators
 - Auto Respawn system
 - Teleport features and mobility tools
@@ -129,6 +122,10 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/mai
 - Bullet Speed manipulation
 - Fixed Walk Speed (continuous)
 - Anti-detection measures
+
+```lua
+loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/main/TankSimulator_Script.lua"))()
+```
 
 ---
 
@@ -171,26 +168,26 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/mai
 ### 🎄 HoHo Hub (Miscellaneous)
 
 External hub loader for
-Blox Fruit
-Universal
-Dead Rails
-Adopt Me
-Blade Ball
-Honkai Star Rail Simulator
-Fisch
-Collect All Pets
-Cong Dong Viet Nam
-Sol's RNG
-Steal a Brainrot
-99 Nights in the Forest
-Eat Blob Simulator
-Hypershot
-Apocalypse Rising 2
-Build An Island
-Fish It
-2 Player Battle Tycoon
-Loot Hero
-Arena Of Blox
+Blox Fruit,
+Universal,
+Dead Rails,
+Adopt Me,
+Blade Ball,
+Honkai Star Rail Simulator,
+Fisch,
+Collect All Pets,
+Cong Dong Viet Nam,
+Sol's RNG,
+Steal a Brainrot,
+99 Nights in the Forest,
+Eat Blob Simulator,
+Hypershot,
+Apocalypse Rising 2,
+Build an Island,
+Fish It,
+2 Player Battle Tycoon,
+Loot Hero,
+Arena Of Blox,
 Word Bomb
 
 ```lua
