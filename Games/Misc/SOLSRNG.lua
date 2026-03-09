@@ -14,9 +14,10 @@ local CONFIG = {
     reexecuteScript = true,
     scriptSourceUrl = "https://raw.githubusercontent.com/NotMe2007/For-All/refs/heads/main/Games/Misc/SOLSRNG.lua",
 
-    autoServerHop = false,
+    autoServerHop = true,
     hopOnBlacklistedBiome = false,
-    hopOnNonTargetBiome = false,
+    hopOnNonTargetBiome = true,
+    nonTargetHopDelaySeconds = 5,
     preferOldestServers = true,
     oldestServerPagesToScan = 8,
     fallbackServerPagesToScan = 3,
@@ -32,9 +33,13 @@ local CONFIG = {
     },
 
     targetBiomes = {
-        -- Example:
-        -- Glitched = true,
-    }
+        Glitched = true,
+    },
+
+    autoPressPlayAfterHop = true,
+    playAutoStartTimeout = 20,
+    playPacketRetryInterval = 1,
+    notifyOnlyTargetBiomes = true,
 }
 
 local Players = game:GetService("Players")
@@ -59,6 +64,8 @@ local queueOnTeleportFn = queue_on_teleport
 local visitedServerIds = {}
 local isTeleporting = false
 local lastBiomeName
+local currentBiomeName
+local nonTargetSince
 
 local function consolePrint(msg)
     print(msg)
@@ -171,6 +178,84 @@ local function sendWebhook(biomeName)
         consolePrint(("[BiomeNotifier] Sent webhook for %s"):format(biomeName))
     else
         consolePrint(("[BiomeNotifier] Webhook failed for %s: %s"):format(biomeName, tostring(response)))
+    end
+end
+
+local function sendPlayBeginPacket()
+    local packets = ReplicatedStorage:FindFirstChild("Packets")
+    if not packets then
+        return false
+    end
+
+    local globalPacketModule = packets:FindFirstChild("Global")
+    if not globalPacketModule then
+        return false
+    end
+
+    local ok, globalPacket = pcall(require, globalPacketModule)
+    if not ok or not globalPacket or not globalPacket.PlayBegin then
+        return false
+    end
+
+    local sendFn = globalPacket.PlayBegin.send
+    if typeof(sendFn) ~= "function" then
+        return false
+    end
+
+    local sendOk = pcall(sendFn)
+    return sendOk
+end
+
+local function findPlayButton()
+    for _, v in ipairs(PlayerGui:GetDescendants()) do
+        local isButton = v:IsA("TextButton") or v:IsA("ImageButton")
+        if isButton and v.Visible and v.Active then
+            local text = ""
+            if v:IsA("TextButton") then
+                text = (v.Text or "")
+            else
+                text = v.Name or ""
+            end
+
+            if text:lower():find("play", 1, true) then
+                return v
+            end
+        end
+    end
+
+    return nil
+end
+
+local function autoPressPlayIfNeeded()
+    if not CONFIG.autoPressPlayAfterHop then
+        return
+    end
+    if Player:GetAttribute("PlayBegin") then
+        return
+    end
+
+    local deadline = tick() + CONFIG.playAutoStartTimeout
+    while tick() < deadline and not Player:GetAttribute("PlayBegin") do
+        local playButton = findPlayButton()
+        if playButton then
+            pcall(function()
+                playButton:Activate()
+            end)
+            if firesignal and playButton.MouseButton1Click then
+                pcall(function()
+                    firesignal(playButton.MouseButton1Click)
+                end)
+            end
+        end
+
+        sendPlayBeginPacket()
+        task.wait(CONFIG.playPacketRetryInterval)
+    end
+
+    if Player:GetAttribute("PlayBegin") then
+        consolePrint("[BiomeNotifier] PlayBegin confirmed.")
+    else
+        consolePrint("[BiomeNotifier] PlayBegin not confirmed within timeout.")
     end
 end
 
@@ -360,6 +445,8 @@ _G.HopServer = function(reason)
     return hopServer(reason or "manual")
 end
 
+task.spawn(autoPressPlayIfNeeded)
+
 TeleportService.TeleportInitFailed:Connect(function(failedPlayer, teleportResult, errorMessage)
     if failedPlayer ~= Player then
         return
@@ -386,6 +473,13 @@ local function handleBiomeChange(rawBiome)
     end
 
     lastBiomeName = biomeName
+    currentBiomeName = biomeName
+
+    if hasAnyTargetBiome() and not hasTargetBiome(biomeName) then
+        nonTargetSince = nonTargetSince or tick()
+    else
+        nonTargetSince = nil
+    end
 
     if CONFIG.blacklistedBiomes[biomeName] then
         if CONFIG.autoServerHop and CONFIG.hopOnBlacklistedBiome then
@@ -396,14 +490,18 @@ local function handleBiomeChange(rawBiome)
         return
     end
 
-    sendWebhook(biomeName)
+    if not CONFIG.notifyOnlyTargetBiomes or not hasAnyTargetBiome() or hasTargetBiome(biomeName) then
+        sendWebhook(biomeName)
+    end
 
     if CONFIG.autoServerHop
         and CONFIG.hopOnNonTargetBiome
         and hasAnyTargetBiome()
-        and not hasTargetBiome(biomeName) then
+        and not hasTargetBiome(biomeName)
+        and nonTargetSince
+        and tick() - nonTargetSince >= CONFIG.nonTargetHopDelaySeconds then
         task.spawn(function()
-            hopServer("non_target_biome")
+            hopServer("non_target_biome_timeout")
         end)
     end
 end
@@ -477,6 +575,18 @@ task.spawn(function()
 
         if biomeLabel then
             handleBiomeChange(biomeLabel.Text)
+        end
+
+        if CONFIG.autoServerHop
+            and CONFIG.hopOnNonTargetBiome
+            and hasAnyTargetBiome()
+            and currentBiomeName
+            and not hasTargetBiome(currentBiomeName)
+            and nonTargetSince
+            and tick() - nonTargetSince >= CONFIG.nonTargetHopDelaySeconds then
+            task.spawn(function()
+                hopServer("non_target_biome_timer")
+            end)
         end
 
         task.wait(CONFIG.pollInterval)
