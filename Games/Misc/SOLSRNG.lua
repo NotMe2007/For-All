@@ -21,6 +21,8 @@ local CONFIG = {
     preferOldestServers = true,
     oldestServerPagesToScan = 8,
     fallbackServerPagesToScan = 3,
+    clearVisitedIfNoServer = true,
+    noServerRetryCooldown = 2,
     hopDelaySeconds = 2,
     maxServerHopAttempts = 10,
 
@@ -67,6 +69,7 @@ local isTeleporting = false
 local lastBiomeName
 local currentBiomeName
 local nonTargetSince
+local lastNoServerLogAt = 0
 
 local function consolePrint(msg)
     print(msg)
@@ -333,21 +336,37 @@ local function collectServers(sortOrder, maxPages)
     return collected, nil
 end
 
-local function pickServerInstanceId()
-    local serverPool = {}
-
-    if CONFIG.preferOldestServers then
-        local oldest, _ = collectServers("Asc", CONFIG.oldestServerPagesToScan)
-        for _, server in ipairs(oldest) do
-            table.insert(serverPool, server)
+local function mergeServers(target, incoming)
+    local seen = {}
+    for _, s in ipairs(target) do
+        if s.id then
+            seen[s.id] = true
         end
     end
 
-    if #serverPool == 0 then
-        local fallback, _ = collectServers("Desc", CONFIG.fallbackServerPagesToScan)
-        for _, server in ipairs(fallback) do
-            table.insert(serverPool, server)
+    for _, s in ipairs(incoming) do
+        if s.id and not seen[s.id] then
+            table.insert(target, s)
+            seen[s.id] = true
         end
+    end
+end
+
+local function resetVisitedServers()
+    visitedServerIds = {}
+end
+
+local function pickServerInstanceId()
+    local serverPool = {}
+    local oldest, oldestErr = collectServers("Asc", CONFIG.oldestServerPagesToScan)
+    local newest, newestErr = collectServers("Desc", CONFIG.fallbackServerPagesToScan)
+
+    if CONFIG.preferOldestServers then
+        mergeServers(serverPool, oldest)
+        mergeServers(serverPool, newest)
+    else
+        mergeServers(serverPool, newest)
+        mergeServers(serverPool, oldest)
     end
 
     for _, server in ipairs(serverPool) do
@@ -363,7 +382,19 @@ local function pickServerInstanceId()
         end
     end
 
-    return nil, "No suitable server found"
+    if CONFIG.clearVisitedIfNoServer and next(visitedServerIds) ~= nil then
+        resetVisitedServers()
+        for _, server in ipairs(serverPool) do
+            local id = server.id
+            local playing = tonumber(server.playing) or 0
+            local maxPlayers = tonumber(server.maxPlayers) or 0
+            if id and id ~= game.JobId and playing < maxPlayers then
+                return id, nil
+            end
+        end
+    end
+
+    return nil, tostring(oldestErr or newestErr or "No suitable server found")
 end
 
 local function hopServer(reason)
@@ -405,7 +436,11 @@ local function hopServer(reason)
 
             consolePrint("[BiomeNotifier] Teleport failed: " .. tostring(tpErr))
         else
-            consolePrint("[BiomeNotifier] Could not pick server: " .. tostring(err))
+            local now = tick()
+            if now - lastNoServerLogAt >= CONFIG.noServerRetryCooldown then
+                consolePrint("[BiomeNotifier] Could not pick server: " .. tostring(err))
+                lastNoServerLogAt = now
+            end
         end
 
         task.wait(CONFIG.hopDelaySeconds)
