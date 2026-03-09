@@ -21,6 +21,8 @@ local CONFIG = {
     preferOldestServers = true,
     oldestServerPagesToScan = 8,
     fallbackServerPagesToScan = 3,
+    avoidFriendServers = true,
+    friendServerPagesToScan = 3,
     clearVisitedIfNoServer = true,
     noServerRetryCooldown = 2,
     hopDelaySeconds = 2,
@@ -288,9 +290,10 @@ local function httpGet(url)
     return false, "No HTTP method available"
 end
 
-local function fetchServerPage(sortOrder, cursor)
-    local url = ("https://games.roblox.com/v1/games/%d/servers/Public?sortOrder=%s&limit=100&excludeFullGames=true"):format(
+local function fetchServerPage(serverType, sortOrder, cursor)
+    local url = ("https://games.roblox.com/v1/games/%d/servers/%s?sortOrder=%s&limit=100&excludeFullGames=true"):format(
         game.PlaceId,
+        serverType,
         sortOrder
     )
     if cursor and cursor ~= "" then
@@ -313,12 +316,12 @@ local function fetchServerPage(sortOrder, cursor)
     return decoded.data or {}, decoded.nextPageCursor, nil
 end
 
-local function collectServers(sortOrder, maxPages)
+local function collectServers(serverType, sortOrder, maxPages)
     local cursor = ""
     local collected = {}
 
     for _ = 1, maxPages do
-        local servers, nextCursor, err = fetchServerPage(sortOrder, cursor)
+        local servers, nextCursor, err = fetchServerPage(serverType, sortOrder, cursor)
         if not servers then
             return collected, err
         end
@@ -356,10 +359,27 @@ local function resetVisitedServers()
     visitedServerIds = {}
 end
 
+local function collectFriendServerIdSet()
+    local set = {}
+    if not CONFIG.avoidFriendServers then
+        return set
+    end
+
+    local friendServers, _ = collectServers("Friend", "Asc", CONFIG.friendServerPagesToScan)
+    for _, server in ipairs(friendServers) do
+        if server.id then
+            set[server.id] = true
+        end
+    end
+
+    return set
+end
+
 local function pickServerInstanceId()
     local serverPool = {}
-    local oldest, oldestErr = collectServers("Asc", CONFIG.oldestServerPagesToScan)
-    local newest, newestErr = collectServers("Desc", CONFIG.fallbackServerPagesToScan)
+    local friendServerIds = collectFriendServerIdSet()
+    local oldest, oldestErr = collectServers("Public", "Asc", CONFIG.oldestServerPagesToScan)
+    local newest, newestErr = collectServers("Public", "Desc", CONFIG.fallbackServerPagesToScan)
 
     if CONFIG.preferOldestServers then
         mergeServers(serverPool, oldest)
@@ -376,6 +396,7 @@ local function pickServerInstanceId()
 
         if id
             and id ~= game.JobId
+            and not friendServerIds[id]
             and not visitedServerIds[id]
             and playing < maxPlayers then
             return id, nil
@@ -388,7 +409,7 @@ local function pickServerInstanceId()
             local id = server.id
             local playing = tonumber(server.playing) or 0
             local maxPlayers = tonumber(server.maxPlayers) or 0
-            if id and id ~= game.JobId and playing < maxPlayers then
+            if id and id ~= game.JobId and not friendServerIds[id] and playing < maxPlayers then
                 return id, nil
             end
         end
