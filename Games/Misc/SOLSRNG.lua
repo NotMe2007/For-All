@@ -9,23 +9,31 @@ local CONFIG = {
     pingUser = true,
     discordUserId = "USERID",
     pollInterval = 0.5,
+
     teleportTimeout = 15,
     reexecuteScript = true,
-    -- Put your hosted script URL here so the script auto-loads after teleport.
-    scriptSourceUrl = "",
+    scriptSourceUrl = "https://raw.githubusercontent.com/NotMe2007/For-All/refs/heads/main/Games/Misc/SOLSRNG.lua",
+
     autoServerHop = false,
     hopOnBlacklistedBiome = false,
     hopOnNonTargetBiome = false,
+    preferOldestServers = true,
+    oldestServerPagesToScan = 8,
+    fallbackServerPagesToScan = 3,
     hopDelaySeconds = 2,
     maxServerHopAttempts = 10,
+
+    shareServerJoinLinks = true,
+
     blacklistedBiomes = {
         Normal = true,
         ["The Limbo"] = true,
         Limbo = true
     },
-    -- Optional whitelist for auto-hop mode. Empty means disabled.
+
     targetBiomes = {
-        -- Example: Starfall = true
+        -- Example:
+        -- Glitched = true,
     }
 }
 
@@ -48,24 +56,122 @@ local queueOnTeleportFn = queue_on_teleport
     or (fluxus and fluxus.queue_on_teleport)
     or (krnl and krnl.queue_on_teleport)
 
+local visitedServerIds = {}
+local isTeleporting = false
+local lastBiomeName
+
 local function consolePrint(msg)
     print(msg)
 end
 
-local function shouldTargetBiome(biomeName)
-    if not CONFIG.targetBiomes then
-        return false
-    end
-
-    for _ in pairs(CONFIG.targetBiomes) do
+local function hasAnyTargetBiome()
+    for _ in pairs(CONFIG.targetBiomes or {}) do
         return true
     end
-
     return false
 end
 
 local function hasTargetBiome(biomeName)
     return CONFIG.targetBiomes and CONFIG.targetBiomes[biomeName] == true
+end
+
+local function getServerJoinLinks(instanceId)
+    local pid = game.PlaceId
+    local jobId = instanceId or game.JobId
+    return {
+        deepLink = ("roblox://placeID=%d&gameInstanceId=%s"):format(pid, jobId),
+        webLink = ("https://www.roblox.com/games/%d?gameInstanceId=%s"):format(pid, jobId)
+    }
+end
+
+local function normalizeBiomeName(rawText)
+    if typeof(rawText) ~= "string" then
+        return nil
+    end
+
+    local text = rawText:gsub("^%s*%[%s*", ""):gsub("%s*%]%s*$", "")
+    text = text:gsub("^%s+", ""):gsub("%s+$", "")
+    if text == "" then
+        return nil
+    end
+
+    local lower = text:lower()
+    if lower == "the limbo" then
+        return "The Limbo"
+    end
+
+    return lower:gsub("(%a)([%w_]*)", function(first, rest)
+        return first:upper() .. rest
+    end)
+end
+
+local function findBiomeLabel()
+    local parentSize = UDim2.fromScale(0.3, 0.03)
+    local childSize = UDim2.fromScale(0, 0.7)
+
+    for _, descendant in ipairs(MainInterface:GetDescendants()) do
+        if descendant:IsA("TextLabel") and descendant.Size == parentSize then
+            for _, child in ipairs(descendant:GetChildren()) do
+                if child:IsA("TextLabel") and child.Size == childSize then
+                    return child
+                end
+            end
+        end
+    end
+
+    return nil
+end
+
+local biomeLabel = findBiomeLabel()
+
+local function buildMessage(biomeName)
+    local pingText = ""
+    if CONFIG.pingUser and CONFIG.discordUserId ~= "" and CONFIG.discordUserId ~= "USERID" then
+        pingText = ("<@%s> "):format(CONFIG.discordUserId)
+    end
+
+    local message = ("%sNew biome detected: **%s**"):format(pingText, biomeName)
+    if CONFIG.shareServerJoinLinks then
+        local links = getServerJoinLinks(game.JobId)
+        message = message
+            .. "\nServer Instance: `" .. game.JobId .. "`"
+            .. "\nJoin (roblox://): " .. links.deepLink
+            .. "\nJoin (web): " .. links.webLink
+    end
+
+    return message
+end
+
+local function sendWebhook(biomeName)
+    if not requestFn then
+        consolePrint("[BiomeNotifier] request/http_request not found, cannot send webhook.")
+        return
+    end
+    if CONFIG.webhookUrl == "" then
+        consolePrint("[BiomeNotifier] webhook URL is empty.")
+        return
+    end
+
+    local payload = {
+        content = buildMessage(biomeName)
+    }
+
+    local ok, response = pcall(function()
+        return requestFn({
+            Url = CONFIG.webhookUrl,
+            Method = "POST",
+            Headers = {
+                ["Content-Type"] = "application/json"
+            },
+            Body = HttpService:JSONEncode(payload)
+        })
+    end)
+
+    if ok then
+        consolePrint(("[BiomeNotifier] Sent webhook for %s"):format(biomeName))
+    else
+        consolePrint(("[BiomeNotifier] Webhook failed for %s: %s"):format(biomeName, tostring(response)))
+    end
 end
 
 local function queueScriptForTeleport()
@@ -120,11 +226,11 @@ local function httpGet(url)
     return false, "No HTTP method available"
 end
 
-local visitedServerIds = {}
-local isTeleporting = false
-
-local function fetchServerPage(cursor)
-    local url = ("https://games.roblox.com/v1/games/%d/servers/Public?sortOrder=Asc&limit=100&excludeFullGames=true"):format(game.PlaceId)
+local function fetchServerPage(sortOrder, cursor)
+    local url = ("https://games.roblox.com/v1/games/%d/servers/Public?sortOrder=%s&limit=100&excludeFullGames=true"):format(
+        game.PlaceId,
+        sortOrder
+    )
     if cursor and cursor ~= "" then
         url = url .. "&cursor=" .. HttpService:UrlEncode(cursor)
     end
@@ -145,28 +251,18 @@ local function fetchServerPage(cursor)
     return decoded.data or {}, decoded.nextPageCursor, nil
 end
 
-local function pickServerInstanceId()
+local function collectServers(sortOrder, maxPages)
     local cursor = ""
-    local pages = 0
+    local collected = {}
 
-    while pages < 6 do
-        pages = pages + 1
-        local servers, nextCursor, err = fetchServerPage(cursor)
+    for _ = 1, maxPages do
+        local servers, nextCursor, err = fetchServerPage(sortOrder, cursor)
         if not servers then
-            return nil, err
+            return collected, err
         end
 
         for _, server in ipairs(servers) do
-            local id = server.id
-            local playing = tonumber(server.playing) or 0
-            local maxPlayers = tonumber(server.maxPlayers) or 0
-
-            if id
-                and id ~= game.JobId
-                and not visitedServerIds[id]
-                and playing < maxPlayers then
-                return id, nil
-            end
+            table.insert(collected, server)
         end
 
         if not nextCursor or nextCursor == "" then
@@ -175,12 +271,45 @@ local function pickServerInstanceId()
         cursor = nextCursor
     end
 
+    return collected, nil
+end
+
+local function pickServerInstanceId()
+    local serverPool = {}
+
+    if CONFIG.preferOldestServers then
+        local oldest, _ = collectServers("Asc", CONFIG.oldestServerPagesToScan)
+        for _, server in ipairs(oldest) do
+            table.insert(serverPool, server)
+        end
+    end
+
+    if #serverPool == 0 then
+        local fallback, _ = collectServers("Desc", CONFIG.fallbackServerPagesToScan)
+        for _, server in ipairs(fallback) do
+            table.insert(serverPool, server)
+        end
+    end
+
+    for _, server in ipairs(serverPool) do
+        local id = server.id
+        local playing = tonumber(server.playing) or 0
+        local maxPlayers = tonumber(server.maxPlayers) or 0
+
+        if id
+            and id ~= game.JobId
+            and not visitedServerIds[id]
+            and playing < maxPlayers then
+            return id, nil
+        end
+    end
+
     return nil, "No suitable server found"
 end
 
 local function hopServer(reason)
     if isTeleporting then
-        return
+        return false
     end
 
     isTeleporting = true
@@ -190,12 +319,19 @@ local function hopServer(reason)
         local serverId, err = pickServerInstanceId()
         if serverId then
             visitedServerIds[serverId] = true
+            local links = getServerJoinLinks(serverId)
+
             consolePrint(("[BiomeNotifier] Hopping (%s) to %s [attempt %d/%d]"):format(
                 tostring(reason or "manual"),
                 serverId,
                 attempt,
                 CONFIG.maxServerHopAttempts
             ))
+
+            if CONFIG.shareServerJoinLinks then
+                consolePrint("[BiomeNotifier] Share link (roblox://): " .. links.deepLink)
+                consolePrint("[BiomeNotifier] Share link (web): " .. links.webLink)
+            end
 
             local tpOk, tpErr = pcall(function()
                 TeleportService:TeleportToPlaceInstance(game.PlaceId, serverId, Player)
@@ -236,90 +372,6 @@ TeleportService.TeleportInitFailed:Connect(function(failedPlayer, teleportResult
     ))
 end)
 
-local function normalizeBiomeName(rawText)
-    if typeof(rawText) ~= "string" then
-        return nil
-    end
-
-    local text = rawText:gsub("^%s*%[%s*", ""):gsub("%s*%]%s*$", "")
-    text = text:gsub("^%s+", ""):gsub("%s+$", "")
-    if text == "" then
-        return nil
-    end
-
-    local lower = text:lower()
-    if lower == "the limbo" then
-        return "The Limbo"
-    end
-
-    -- Convert all-caps display text to title case (e.g. STARFALL -> Starfall).
-    return lower:gsub("(%a)([%w_]*)", function(first, rest)
-        return first:upper() .. rest
-    end)
-end
-
-local function findBiomeLabel()
-    local targetParentSize = UDim2.fromScale(0.3, 0.03)
-    local targetChildSize = UDim2.fromScale(0, 0.7)
-
-    for _, descendant in ipairs(MainInterface:GetDescendants()) do
-        if descendant:IsA("TextLabel") and descendant.Size == targetParentSize then
-            for _, child in ipairs(descendant:GetChildren()) do
-                if child:IsA("TextLabel") and child.Size == targetChildSize then
-                    return child
-                end
-            end
-        end
-    end
-
-    return nil
-end
-
-local biomeLabel = findBiomeLabel()
-
-local function buildMessage(biomeName)
-    local pingText = ""
-    if CONFIG.pingUser and CONFIG.discordUserId ~= "" and CONFIG.discordUserId ~= "USERID" then
-        pingText = ("<@%s> "):format(CONFIG.discordUserId)
-    end
-
-    return ("%sNew biome detected: **%s**"):format(pingText, biomeName)
-end
-
-local function sendWebhook(biomeName)
-    if not requestFn then
-        consolePrint("[BiomeNotifier] request/http_request not found, cannot send webhook.")
-        return
-    end
-    if CONFIG.webhookUrl == "" then
-        consolePrint("[BiomeNotifier] webhook URL is empty.")
-        return
-    end
-
-    local content = buildMessage(biomeName)
-    local payload = {
-        content = content
-    }
-
-    local ok, response = pcall(function()
-        return requestFn({
-            Url = CONFIG.webhookUrl,
-            Method = "POST",
-            Headers = {
-                ["Content-Type"] = "application/json"
-            },
-            Body = HttpService:JSONEncode(payload)
-        })
-    end)
-
-    if ok then
-        consolePrint(("[BiomeNotifier] Sent webhook for %s"):format(biomeName))
-    else
-        consolePrint(("[BiomeNotifier] Webhook failed for %s: %s"):format(biomeName, tostring(response)))
-    end
-end
-
-local lastBiomeName
 local function handleBiomeChange(rawBiome)
     if not _G.BiomeCheck then
         return
@@ -334,6 +386,7 @@ local function handleBiomeChange(rawBiome)
     end
 
     lastBiomeName = biomeName
+
     if CONFIG.blacklistedBiomes[biomeName] then
         if CONFIG.autoServerHop and CONFIG.hopOnBlacklistedBiome then
             task.spawn(function()
@@ -347,7 +400,7 @@ local function handleBiomeChange(rawBiome)
 
     if CONFIG.autoServerHop
         and CONFIG.hopOnNonTargetBiome
-        and shouldTargetBiome(biomeName)
+        and hasAnyTargetBiome()
         and not hasTargetBiome(biomeName) then
         task.spawn(function()
             hopServer("non_target_biome")
