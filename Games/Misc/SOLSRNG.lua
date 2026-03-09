@@ -40,6 +40,7 @@ local CONFIG = {
     playAutoStartTimeout = 20,
     playClickRetryInterval = 1,
     notifyOnlyTargetBiomes = true,
+    useReplicaListener = false,
 }
 
 local Players = game:GetService("Players")
@@ -219,11 +220,6 @@ local function autoPressPlayIfNeeded()
             pcall(function()
                 playButton:Activate()
             end)
-            if firesignal and playButton.MouseButton1Click then
-                pcall(function()
-                    firesignal(playButton.MouseButton1Click)
-                end)
-            end
             consolePrint("[BiomeNotifier] Attempted Play button click.")
         end
 
@@ -485,6 +481,10 @@ local function handleBiomeChange(rawBiome)
 end
 
 local function setupReplicaListener()
+    if not CONFIG.useReplicaListener then
+        return false
+    end
+
     local modules = ReplicatedStorage:FindFirstChild("Modules")
     if not modules then
         return false
