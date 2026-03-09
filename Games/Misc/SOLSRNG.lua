@@ -38,7 +38,7 @@ local CONFIG = {
 
     autoPressPlayAfterHop = true,
     playAutoStartTimeout = 20,
-    playPacketRetryInterval = 1,
+    playClickRetryInterval = 1,
     notifyOnlyTargetBiomes = true,
 }
 
@@ -181,43 +181,21 @@ local function sendWebhook(biomeName)
     end
 end
 
-local function sendPlayBeginPacket()
-    local packets = ReplicatedStorage:FindFirstChild("Packets")
-    if not packets then
-        return false
-    end
-
-    local globalPacketModule = packets:FindFirstChild("Global")
-    if not globalPacketModule then
-        return false
-    end
-
-    local ok, globalPacket = pcall(require, globalPacketModule)
-    if not ok or not globalPacket or not globalPacket.PlayBegin then
-        return false
-    end
-
-    local sendFn = globalPacket.PlayBegin.send
-    if typeof(sendFn) ~= "function" then
-        return false
-    end
-
-    local sendOk = pcall(sendFn)
-    return sendOk
-end
-
 local function findPlayButton()
     for _, v in ipairs(PlayerGui:GetDescendants()) do
         local isButton = v:IsA("TextButton") or v:IsA("ImageButton")
         if isButton and v.Visible and v.Active then
-            local text = ""
-            if v:IsA("TextButton") then
-                text = (v.Text or "")
-            else
-                text = v.Name or ""
-            end
+            local text = v:IsA("TextButton") and (v.Text or "") or (v.Name or "")
+            local lowerText = text:lower()
+            local lowerName = (v.Name or ""):lower()
+            local parentPath = v:GetFullName():lower()
 
-            if text:lower():find("play", 1, true) then
+            -- Restrict auto-click to loading/menu play buttons to avoid random UI buttons.
+            local isLikelyLoadingButton = parentPath:find("loading", 1, true)
+                or parentPath:find("mainmenu", 1, true)
+                or parentPath:find("testloading", 1, true)
+
+            if (lowerText == "play" or lowerName:find("play", 1, true)) and isLikelyLoadingButton then
                 return v
             end
         end
@@ -246,10 +224,10 @@ local function autoPressPlayIfNeeded()
                     firesignal(playButton.MouseButton1Click)
                 end)
             end
+            consolePrint("[BiomeNotifier] Attempted Play button click.")
         end
 
-        sendPlayBeginPacket()
-        task.wait(CONFIG.playPacketRetryInterval)
+        task.wait(CONFIG.playClickRetryInterval)
     end
 
     if Player:GetAttribute("PlayBegin") then
