@@ -214,6 +214,10 @@ local function autoPressPlayIfNeeded()
     if not CONFIG.autoPressPlayAfterHop then
         return
     end
+    -- If biomeLabel already exists, the player is already in-game; no play button needed.
+    if biomeLabel then
+        return
+    end
     if Player:GetAttribute("PlayBegin") then
         return
     end
@@ -391,14 +395,11 @@ local function pickServerInstanceId()
 
     for _, server in ipairs(serverPool) do
         local id = server.id
-        local playing = tonumber(server.playing) or 0
-        local maxPlayers = tonumber(server.maxPlayers) or 0
 
         if id
             and id ~= game.JobId
             and not friendServerIds[id]
-            and not visitedServerIds[id]
-            and playing < maxPlayers then
+            and not visitedServerIds[id] then
             return id, nil
         end
     end
@@ -407,9 +408,7 @@ local function pickServerInstanceId()
         resetVisitedServers()
         for _, server in ipairs(serverPool) do
             local id = server.id
-            local playing = tonumber(server.playing) or 0
-            local maxPlayers = tonumber(server.maxPlayers) or 0
-            if id and id ~= game.JobId and not friendServerIds[id] and playing < maxPlayers then
+            if id and id ~= game.JobId and not friendServerIds[id] then
                 return id, nil
             end
         end
