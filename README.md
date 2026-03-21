@@ -8,17 +8,19 @@ Universal Roblox script collection with smart game detection and organized folde
 
 ```repo
 For-All/
-├── BreakYourBones.lua      # Break Your Bones automation hub
-├── Pickaxe Sim.lua         # Pickaxe Simulator mining script  
-├── TankSimulator_Script.lua # Tank Simulator combat & automation
 ├── Universal/               # Tools that work with ALL games
 │   └── dex.lua             # Universal Dex++ with smart game detection
 ├── Games/                  # Game-specific scripts (organized)
 │   ├── WorldZero/          # World Zero obfuscated scripts
 │   ├── FarmAFish/          # Farm A Fish scripts
-│   ├── PetSim99/           # Pet Simulator 99 scripts
 │   ├── Descent/            # Descent scripts
 │   └── Misc/               # Miscellaneous scripts
+│       ├── BreakYourBones.lua
+│       ├── Pickaxe Sim.lua
+│       ├── TankSimulator_Script.lua
+│       ├── hohohub.lua
+│       ├── SOLSRNG.lua
+│       └── watch numbers go up.lua
 └── README.md
 ```
 
@@ -81,7 +83,7 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/mai
 - Material hunting with target modifiers
 
 ```lua
-loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/main/BreakYourBones.lua"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/main/Games/Misc/BreakYourBones.lua"))()
 ```
 ---
 
@@ -100,7 +102,7 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/mai
 - Rayfield UI with full customization
 
 ```lua
-loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/main/Pickaxe%20Sim.lua"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/main/Games/Misc/Pickaxe%20Sim.lua"))()
 ```
 ---
 
@@ -124,27 +126,10 @@ Complete Tank Simulator automation with combat enhancement and utility features.
 - Anti-detection measures
 
 ```lua
-loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/main/TankSimulator_Script.lua"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/main/Games/Misc/TankSimulator_Script.lua"))()
 ```
 
 ---
-
-### ⚔️ Ultra Unfair
-
-**Features:**
-
-- **Auto Spin** - Automatic ability rolling with level filtering
-- **Kill Aura** - Combat automation with hit box extension
-- **Auto Farm** - Zone-based farming with boss priority (beta)
-- **Trait Reroll** - Target specific traits (Immortal, The One, etc.) (beta)
-- **Smart Roll** - Gene rolling with cycle detection 
-- **Auto Stats** - Automatic stat point allocation (beta)
-- **Auto Aura** - Aura rolling and duplicate management (beta)
-- **Auto Saitama** - Fist rolling and auto-fuse system (beta)
-
-```lua
-loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/main/PB%20Unfair/UU_Main.lua"))()
-```
 
 ### 🔦 Descent
 
@@ -162,6 +147,16 @@ Visual enhancement script for the Descent game.
 loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/main/Games/Descent/Descent.lua"))()
 ```
 
+
+---
+
+### 🔢 Watch Numbers Go Up
+
+A simple idle/incremental script that automatically watches numbers go up.
+
+```lua
+loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/main/Games/Misc/watch%20numbers%20go%20up.lua"))()
+```
 
 ---
 
@@ -206,5 +201,5 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/mai
 ---
 
 ## 📜 Credits
-
+`Please join our discord ` - [https://discord.gg/5SnRzS38SC]
 `Based on Prometheus by Elias Oelschner` - [https://github.com/prometheus-lua/Prometheus](https://github.com/prometheus-lua/Prometheus)

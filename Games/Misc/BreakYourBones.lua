@@ -65,7 +65,7 @@ local Window = Rayfield:CreateWindow({
     },
     Discord = {
         Enabled = true,
-        Invite = "https://discord.gg/ZVHjadv4AG",
+        Invite = "https://discord.gg/5SnRzS38SC",
         RememberJoins = true
     },
     KeySystem = false
@@ -574,7 +574,7 @@ InfoTab:CreateParagraph({
 
 InfoTab:CreateParagraph({
     Title = "Credits",
-    Content = "Script made by SeneX Please join our discord https://discord.gg/ZVHjadv4AG \nUI: Rayfield Library"
+    Content = "Script made by SeneX Please join our discord https://discord.gg/5SnRzS38SC \nUI: Rayfield Library"
 })
 
 -- Main Loops
