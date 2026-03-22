@@ -7,8 +7,8 @@
 	Dex++ is a revival of Moon's Dex, made to fulfill Moon's Dex prophecy.
 
 	Universal Edition - For All Games
-	Modded by ZenX Studio
-	dex version: 2.3.0
+	Modded by MentalHub 
+	Dex version: 2.3.1
 ]]
 
 local selection
@@ -15404,23 +15404,24 @@ Main.Init()
 
 -- ========================================
 -- Universal Game Decompiler - ZenX Studio Edition
+-- Luau Compatible
 -- ========================================
 
 getgenv().GameDecompiler = {}
 local GD = getgenv().GameDecompiler
 
 -- Auto-detect game name
-local function getGameName()
+local function getGameName(): string
 	local placeId = game.PlaceId
-	local gameNames = {
+	local gameNames = table.freeze({
 		-- Add known game PlaceIds here
 		[16302235259] = "FarmAFish",
 		[14308554246] = "WorldZero",
 		[102858117] = "UltraUnfair",
 		[8737602449] = "PetSim99",
 		[12884920787] = "Descent",
-	}
-	return gameNames[placeId] or ("Game_%d"):format(placeId)
+	})
+	return gameNames[placeId] or `Game_{placeId}`
 end
 
 -- Configuration
@@ -15433,7 +15434,7 @@ GD.Config = {
 }
 
 -- Core services to exclude from decompilation (Roblox internal files)
-local ExcludedCoreServices = {
+local ExcludedCoreServices = table.freeze({
 	"CorePackages",
 	"CoreGui",
 	"RobloxScriptService",
@@ -15441,13 +15442,13 @@ local ExcludedCoreServices = {
 	"RobloxPluginGuiService",
 	"CoreScript",
 	"BuiltInPlugins"
-}
+})
 
 -- Check if an instance is from a core/excluded service
-local function isFromCoreService(obj)
+local function isFromCoreService(obj: Instance?): boolean
 	if not obj then return true end
 	local fullName = obj:GetFullName()
-	for _, serviceName in pairs(ExcludedCoreServices) do
+	for _, serviceName in ExcludedCoreServices do
 		if fullName:find(serviceName) then
 			return true
 		end
@@ -15456,25 +15457,25 @@ local function isFromCoreService(obj)
 end
 
 -- Create folder structure for organized saving
-local function ensureFolder(folderPath)
+local function ensureFolder(folderPath: string): boolean
 	if not env.makefolder then return false end
 	pcall(env.makefolder, folderPath)
 	return true
 end
 
 -- Clean filename for saving
-local function cleanFileName(name)
+local function cleanFileName(name: string): string
 	return name:gsub("[^%w%s_%-]", "_"):gsub("%s+", "_")
 end
 
 -- Get date string for folder naming
-local function getDateString()
-	local date = os.date("*t")
-	return ("%04d-%02d-%02d"):format(date.year, date.month, date.day)
+local function getDateString(): string
+	local date = os.date("*t") :: {year: number, month: number, day: number}
+	return `{string.format("%04d", date.year)}-{string.format("%02d", date.month)}-{string.format("%02d", date.day)}`
 end
 
 -- Decompile a single script and optionally save
-GD.GetScript = function(script, saveToFile)
+GD.GetScript = function(script: LuaSourceContainer?, saveToFile: boolean?): string?
 	if not script or not script:IsA("LuaSourceContainer") then
 		warn("GD: Invalid script object")
 		return nil
@@ -15487,12 +15488,12 @@ GD.GetScript = function(script, saveToFile)
 	
 	local success, source = pcall(env.decompile, script)
 	if not success or not source then
-		local errorMsg = ("-- GD Decompiler failed to decompile %s\n-- Error: %s"):format(script.ClassName, tostring(source))
+		local errorMsg = `-- GD Decompiler failed to decompile {script.ClassName}\n-- Error: {tostring(source)}`
 		warn(errorMsg)
 		return errorMsg
 	end
 	
-	print(("GD: ✓ Decompiled %s (%s)"):format(script.Name, script.ClassName))
+	print(`GD: ✓ Decompiled {script.Name} ({script.ClassName})`)
 	
 	-- Auto copy to clipboard
 	if GD.Config.AutoCopyClipboard and env.setclipboard then
@@ -15504,76 +15505,76 @@ GD.GetScript = function(script, saveToFile)
 	if saveToFile and env.writefile then
 		local folder = GD.Config.DefaultFolder
 		ensureFolder(folder)
-		local fileName = ("%s/%s_%s.lua"):format(folder, cleanFileName(script.Name), script.ClassName)
+		local fileName = `{folder}/{cleanFileName(script.Name)}_{script.ClassName}.lua`
 		pcall(env.writefile, fileName, source)
-		print(("GD: ✓ Saved to %s"):format(fileName))
+		print(`GD: ✓ Saved to {fileName}`)
 	end
 	
 	return source
 end
 
--- Save a script to the Farm a Fish folder
-GD.Save = function(script, customName)
+-- Save a script to the game folder
+GD.Save = function(script: LuaSourceContainer?, customName: string?): (boolean, string?)
 	if not script or not script:IsA("LuaSourceContainer") then
 		warn("GD.Save: Invalid script object")
-		return false
+		return false, nil
 	end
 	
 	if not env.writefile then
 		warn("GD.Save: writefile not available")
-		return false
+		return false, nil
 	end
 	
 	local success, source = pcall(env.decompile, script)
 	if not success or not source then
 		warn("GD.Save: Failed to decompile")
-		return false
+		return false, nil
 	end
 	
 	local folder = GD.Config.DefaultFolder
 	ensureFolder(folder)
 	
-	local fileName
+	local fileName: string
 	if customName then
-		fileName = ("%s/%s.lua"):format(folder, cleanFileName(customName))
+		fileName = `{folder}/{cleanFileName(customName)}.lua`
 	else
-		fileName = ("%s/%s_%s.lua"):format(folder, cleanFileName(script:GetFullName()), script.ClassName)
+		fileName = `{folder}/{cleanFileName(script:GetFullName())}_{script.ClassName}.lua`
 	end
 	
 	local saveSuccess = pcall(env.writefile, fileName, source)
 	if saveSuccess then
-		print(("GD: ✓ Saved to %s"):format(fileName))
+		print(`GD: ✓ Saved to {fileName}`)
 		return true, fileName
 	else
 		warn("GD.Save: Failed to write file")
-		return false
+		return false, nil
 	end
 end
 
--- Dump all Farm a Fish game scripts (organized by service)
-GD.DumpAll = function(parent)
+-- Dump all game scripts (organized by service)
+GD.DumpAll = function(parent: Instance?): (boolean, number?, string?)
 	parent = parent or game
 	
 	if not env.writefile or not env.makefolder then
 		warn("GD.DumpAll: File operations not available")
-		return false
+		return false, nil, nil
 	end
 	
-	local baseFolder = ("%s_Dump_%s"):format(GD.Config.GameName, getDateString())
+	local baseFolder = `{GD.Config.GameName}_Dump_{getDateString()}`
 	ensureFolder(baseFolder)
 	
 	-- Create subfolders for organization
-	local services = {
+	local services = table.freeze({
 		"ReplicatedStorage",
 		"StarterPlayer",
 		"StarterGui",
 		"Workspace",
 		"ServerScriptService",
 		"Other"
-	}
+	})
 	
-	for _, svc in pairs(services) do
-		ensureFolder(baseFolder .. "/" .. svc)
+	for _, svc in services do
+		ensureFolder(`{baseFolder}/{svc}`)
 	end
 	
 	local count = 0
@@ -15581,140 +15582,154 @@ GD.DumpAll = function(parent)
 	local batchCount = 0
 	
 	print("GD: Starting full dump (with throttling to prevent freeze)...")
-	print(("GD: Saving to folder: %s"):format(baseFolder))
-	print(("GD: Batch size: %d, Delay: %.2fs"):format(GD.Config.BatchSize, GD.Config.BatchDelay))
+	print(`GD: Saving to folder: {baseFolder}`)
+	print(`GD: Batch size: {GD.Config.BatchSize}, Delay: {string.format("%.2f", GD.Config.BatchDelay)}s`)
 	
-	for _, obj in pairs(parent:GetDescendants()) do
-		if obj:IsA("LuaSourceContainer") and env.isViableDecompileScript(obj) and not isFromCoreService(obj) then
-			local success, source = pcall(env.decompile, obj)
-			if success and source then
-				-- Determine which subfolder
-				local fullName = obj:GetFullName()
-				local subFolder = "Other"
-				for _, svc in pairs(services) do
-					if fullName:find("^" .. svc) or fullName:find("%." .. svc) then
-						subFolder = svc
-						break
-					end
-				end
-				
-				local safeName = cleanFileName(obj:GetFullName():gsub("%.", "_"))
-				local fileName = ("%s/%s/%s_%s.lua"):format(baseFolder, subFolder, safeName, obj.ClassName)
-				
-				local writeSuccess = pcall(env.writefile, fileName, source)
-				if writeSuccess then
-					count = count + 1
-					batchCount = batchCount + 1
-					
-					-- Throttle: yield every BatchSize scripts
-					if batchCount >= GD.Config.BatchSize then
-						print(("GD: [%d] scripts saved... (pausing)"):format(count))
-						task.wait(GD.Config.BatchDelay)
-						batchCount = 0
-					end
-				end
-			else
-				failed = failed + 1
+	for _, obj in parent:GetDescendants() do
+		if not (obj:IsA("LuaSourceContainer") and env.isViableDecompileScript(obj) and not isFromCoreService(obj)) then
+			continue
+		end
+		
+		local success, source = pcall(env.decompile, obj)
+		if not success or not source then
+			failed += 1
+			continue
+		end
+		
+		-- Determine which subfolder
+		local fullName = obj:GetFullName()
+		local subFolder = "Other"
+		for _, svc in services do
+			if fullName:find("^" .. svc) or fullName:find("%." .. svc) then
+				subFolder = svc
+				break
+			end
+		end
+		
+		local safeName = cleanFileName(obj:GetFullName():gsub("%.", "_"))
+		local fileName = `{baseFolder}/{subFolder}/{safeName}_{obj.ClassName}.lua`
+		
+		local writeSuccess = pcall(env.writefile, fileName, source)
+		if writeSuccess then
+			count += 1
+			batchCount += 1
+			
+			-- Throttle: yield every BatchSize scripts
+			if batchCount >= GD.Config.BatchSize then
+				print(`GD: [{count}] scripts saved... (pausing)`)
+				task.wait(GD.Config.BatchDelay)
+				batchCount = 0
 			end
 		end
 	end
 	
 	print("========================================")
-	print(("GD: ✓ Dump complete!"):format())
-	print(("GD: Saved %d scripts to '%s'"):format(count, baseFolder))
+	print("GD: ✓ Dump complete!")
+	print(`GD: Saved {count} scripts to '{baseFolder}'`)
 	if failed > 0 then
-		print(("GD: ⚠ %d scripts failed to decompile"):format(failed))
+		print(`GD: ⚠ {failed} scripts failed to decompile`)
 	end
 	print("========================================")
+
+	-- Auto-generate structure.md after full dump
+	print("GD: Generating structure.md...")
+	GD.ExportStructure(parent, baseFolder)
 	
 	return true, count, baseFolder
 end
 
 -- Dump specific service (ReplicatedStorage, Workspace, etc.)
-GD.DumpService = function(serviceName)
-	local service = game:FindFirstChild(serviceName) or game:GetService(serviceName)
-	if not service then
-		warn(("GD.DumpService: Service '%s' not found"):format(serviceName))
-		return false
+GD.DumpService = function(serviceName: string): (boolean, number?, string?)
+	local svc = game:FindFirstChild(serviceName) or game:GetService(serviceName)
+	if not svc then
+		warn(`GD.DumpService: Service '{serviceName}' not found`)
+		return false, nil, nil
 	end
 	
 	if not env.writefile or not env.makefolder then
 		warn("GD.DumpService: File operations not available")
-		return false
+		return false, nil, nil
 	end
 	
-	local folder = ("%s_%s_%s"):format(GD.Config.GameName, serviceName, getDateString())
+	local folder = `{GD.Config.GameName}_{serviceName}_{getDateString()}`
 	ensureFolder(folder)
 	
 	local count = 0
 	local batchCount = 0
-	print(("GD: Dumping %s..."):format(serviceName))
+	print(`GD: Dumping {serviceName}...`)
 	
-	for _, obj in pairs(service:GetDescendants()) do
-		if obj:IsA("LuaSourceContainer") and env.isViableDecompileScript(obj) and not isFromCoreService(obj) then
-			local success, source = pcall(env.decompile, obj)
-			if success and source then
-				local safeName = cleanFileName(obj:GetFullName():gsub("%.", "_"))
-				local fileName = ("%s/%s_%s.lua"):format(folder, safeName, obj.ClassName)
-				pcall(env.writefile, fileName, source)
-				count = count + 1
-				batchCount = batchCount + 1
-				
-				-- Throttle to prevent freeze
-				if batchCount >= GD.Config.BatchSize then
-					print(("GD: [%d] %s (pausing...)"):format(count, obj.Name))
-					task.wait(GD.Config.BatchDelay)
-					batchCount = 0
-				else
-					print(("GD: [%d] %s"):format(count, obj.Name))
-				end
-			end
+	for _, obj in svc:GetDescendants() do
+		if not (obj:IsA("LuaSourceContainer") and env.isViableDecompileScript(obj) and not isFromCoreService(obj)) then
+			continue
+		end
+		
+		local success, source = pcall(env.decompile, obj)
+		if not success or not source then
+			continue
+		end
+		
+		local safeName = cleanFileName(obj:GetFullName():gsub("%.", "_"))
+		local fileName = `{folder}/{safeName}_{obj.ClassName}.lua`
+		pcall(env.writefile, fileName, source)
+		count += 1
+		batchCount += 1
+		
+		-- Throttle to prevent freeze
+		if batchCount >= GD.Config.BatchSize then
+			print(`GD: [{count}] {obj.Name} (pausing...)`)
+			task.wait(GD.Config.BatchDelay)
+			batchCount = 0
+		else
+			print(`GD: [{count}] {obj.Name}`)
 		end
 	end
 	
-	print(("GD: ✓ Saved %d scripts from %s to '%s'"):format(count, serviceName, folder))
+	print(`GD: ✓ Saved {count} scripts from {serviceName} to '{folder}'`)
 	return true, count, folder
 end
 
 -- Find and dump scripts by name pattern
-GD.Find = function(pattern, saveAll)
+GD.Find = function(pattern: string, saveAll: boolean?): {any}
 	local results = {}
+	local lowerPattern = pattern:lower()
 	
-	for _, obj in pairs(game:GetDescendants()) do
-		if obj:IsA("LuaSourceContainer") and obj.Name:lower():find(pattern:lower()) and env.isViableDecompileScript(obj) and not isFromCoreService(obj) then
-			local success, source = pcall(env.decompile, obj)
-			if success and source then
-				table.insert(results, {
-					Instance = obj,
-					Source = source,
-					Name = obj.Name,
-					FullName = obj:GetFullName(),
-					ClassName = obj.ClassName
-				})
-				print(("GD: Found: %s (%s)"):format(obj:GetFullName(), obj.ClassName))
-			end
+	for _, obj in game:GetDescendants() do
+		if not (obj:IsA("LuaSourceContainer") and obj.Name:lower():find(lowerPattern) and env.isViableDecompileScript(obj) and not isFromCoreService(obj)) then
+			continue
+		end
+		
+		local success, source = pcall(env.decompile, obj)
+		if success and source then
+			table.insert(results, {
+				Instance = obj,
+				Source = source,
+				Name = obj.Name,
+				FullName = obj:GetFullName(),
+				ClassName = obj.ClassName
+			})
+			print(`GD: Found: {obj:GetFullName()} ({obj.ClassName})`)
 		end
 	end
 	
-	print(("GD: Found %d scripts matching '%s'"):format(#results, pattern))
+	print(`GD: Found {#results} scripts matching '{pattern}'`)
 	
 	-- Save all if requested
 	if saveAll and #results > 0 and env.writefile then
-		local folder = ("%s_Search_%s"):format(GD.Config.GameName, cleanFileName(pattern))
+		local folder = `{GD.Config.GameName}_Search_{cleanFileName(pattern)}`
 		ensureFolder(folder)
 		
-		for i, result in pairs(results) do
-			local fileName = ("%s/%s_%s.lua"):format(folder, cleanFileName(result.FullName:gsub("%.", "_")), result.ClassName)
+		for _, result in results do
+			local fileName = `{folder}/{cleanFileName(result.FullName:gsub("%.", "_"))}_{result.ClassName}.lua`
 			pcall(env.writefile, fileName, result.Source)
 		end
-		print(("GD: ✓ Saved %d scripts to '%s'"):format(#results, folder))
+		print(`GD: ✓ Saved {#results} scripts to '{folder}'`)
 	end
 	
 	return results
 end
 
 -- Get game core modules (common patterns across games)
-GD.GetCoreModules = function(customModules)
+GD.GetCoreModules = function(customModules: {string}?): ({any}, string)
 	-- Universal module patterns that work across many games
 	local coreModules = customModules or {
 		"Main",
@@ -15736,7 +15751,7 @@ GD.GetCoreModules = function(customModules)
 		"Helper"
 	}
 	
-	local folder = ("%s_Core_%s"):format(GD.Config.GameName, getDateString())
+	local folder = `{GD.Config.GameName}_Core_{getDateString()}`
 	if env.makefolder then
 		ensureFolder(folder)
 	end
@@ -15744,65 +15759,203 @@ GD.GetCoreModules = function(customModules)
 	local found = {}
 	local count = 0
 	
-	print(("GD: Searching for %s core modules..."):format(GD.Config.GameName))
+	print(`GD: Searching for {GD.Config.GameName} core modules...`)
 	
-	for _, moduleName in pairs(coreModules) do
-		for _, obj in pairs(game:GetDescendants()) do
-			if obj:IsA("ModuleScript") and obj.Name:find(moduleName) and env.isViableDecompileScript(obj) and not isFromCoreService(obj) then
-				local success, source = pcall(env.decompile, obj)
-				if success and source then
-					count = count + 1
-					table.insert(found, {
-						Name = obj.Name,
-						FullName = obj:GetFullName(),
-						Source = source
-					})
-					
-					if env.writefile then
-						local fileName = ("%s/%s_%s.lua"):format(folder, cleanFileName(obj:GetFullName():gsub("%.", "_")), "ModuleScript")
-						pcall(env.writefile, fileName, source)
-					end
-					
-					print(("GD: [%d] ✓ %s"):format(count, obj:GetFullName()))
+	for _, moduleName in coreModules do
+		for _, obj in game:GetDescendants() do
+			if not (obj:IsA("ModuleScript") and obj.Name:find(moduleName) and env.isViableDecompileScript(obj) and not isFromCoreService(obj)) then
+				continue
+			end
+			
+			local success, source = pcall(env.decompile, obj)
+			if success and source then
+				count += 1
+				table.insert(found, {
+					Name = obj.Name,
+					FullName = obj:GetFullName(),
+					Source = source
+				})
+				
+				if env.writefile then
+					local fileName = `{folder}/{cleanFileName(obj:GetFullName():gsub("%.", "_"))}_ModuleScript.lua`
+					pcall(env.writefile, fileName, source)
 				end
+				
+				print(`GD: [{count}] ✓ {obj:GetFullName()}`)
 			end
 		end
 	end
 	
-	print(("GD: ✓ Found %d core modules, saved to '%s'"):format(count, folder))
+	print(`GD: ✓ Found {count} core modules, saved to '{folder}'`)
 	return found, folder
 end
 
--- Get remote events and functions
-GD.GetRemotes = function()
-	local remotes = {
-		RemoteEvents = {},
-		RemoteFunctions = {}
-	}
-	
-	for _, obj in pairs(game:GetDescendants()) do
-		if not isFromCoreService(obj) then
-			if obj:IsA("RemoteEvent") then
-				table.insert(remotes.RemoteEvents, obj)
-			elseif obj:IsA("RemoteFunction") then
-				table.insert(remotes.RemoteFunctions, obj)
+-- Export the entire game structure as a markdown tree
+GD.ExportStructure = function(parent: Instance?, folder: string?): (string | boolean, string?)
+	parent = parent or game
+
+	if not env.writefile then
+		warn("GD.ExportStructure: writefile not available")
+		return false, nil
+	end
+
+	local lines: {string} = {}
+	local gameName = GD.Config.GameName
+	table.insert(lines, `# {gameName} - Game Structure`)
+	table.insert(lines, "")
+	table.insert(lines, "> Auto-generated by Dex++ Universal Game Decompiler")
+	table.insert(lines, `> PlaceId: {game.PlaceId}`)
+	table.insert(lines, "")
+
+	local function addNode(obj: Instance, indent: number)
+		local prefix = string.rep("  ", indent)
+		local icon = ""
+		if obj:IsA("Folder") then
+			icon = "📁 "
+		elseif obj:IsA("ModuleScript") then
+			icon = "📦 "
+		elseif obj:IsA("LocalScript") or obj:IsA("Script") then
+			icon = "📜 "
+		elseif obj:IsA("Model") then
+			icon = "🧱 "
+		elseif obj:IsA("BasePart") then
+			icon = "🔲 "
+		elseif obj:IsA("RemoteEvent") or obj:IsA("RemoteFunction") then
+			icon = "📡 "
+		elseif obj:IsA("BindableEvent") or obj:IsA("BindableFunction") then
+			icon = "🔗 "
+		elseif obj:IsA("ValueBase") then
+			icon = "💎 "
+		elseif obj:IsA("Tool") then
+			icon = "🔧 "
+		elseif obj:IsA("ScreenGui") or obj:IsA("BillboardGui") or obj:IsA("SurfaceGui") then
+			icon = "🖥️ "
+		elseif obj:IsA("GuiObject") then
+			icon = "🪟 "
+		elseif obj:IsA("Camera") then
+			icon = "📷 "
+		elseif obj:IsA("Sound") then
+			icon = "🔊 "
+		elseif obj:IsA("Light") then
+			icon = "💡 "
+		elseif obj:IsA("ParticleEmitter") or obj:IsA("Fire") or obj:IsA("Smoke") or obj:IsA("Sparkles") then
+			icon = "✨ "
+		elseif obj:IsA("Animation") or obj:IsA("AnimationTrack") then
+			icon = "🎬 "
+		end
+
+		local className = obj.ClassName
+		local name = tostring(obj)
+		local entry = if className ~= name
+			then `{prefix}- {icon}{name} \`[{className}]\``
+			else `{prefix}- {icon}{name}`
+		table.insert(lines, entry)
+
+		local children: {Instance} = {}
+		local ok, ch = pcall(obj.GetChildren, obj)
+		if ok and ch then children = ch end
+
+		for _, child in children do
+			if not isFromCoreService(child) then
+				addNode(child, indent + 1)
 			end
 		end
 	end
+
+	-- Top-level services
+	local topLevel = table.freeze({
+		"Workspace",
+		"ReplicatedFirst",
+		"ReplicatedStorage",
+		"StarterGui",
+		"StarterPack",
+		"StarterPlayer",
+		"Players",
+		"Lighting",
+		"SoundService",
+		"Chat",
+		"Teams",
+		"TestService",
+	})
+
+	for _, svcName in topLevel do
+		local ok, svc = pcall(game.GetService, game, svcName)
+		if not ok or not svc then
+			continue
+		end
+		
+		local children: {Instance} = {}
+		local cOk, ch = pcall(svc.GetChildren, svc)
+		if cOk and ch then children = ch end
+		
+		if #children == 0 then
+			continue
+		end
+		
+		table.insert(lines, `## {svcName}`)
+		table.insert(lines, "")
+		for _, child in children do
+			if not isFromCoreService(child) then
+				addNode(child, 0)
+			end
+		end
+		table.insert(lines, "")
+	end
+
+	local content = table.concat(lines, "\n")
+	local savePath: string
+	if folder then
+		ensureFolder(folder)
+		savePath = `{folder}/structure.md`
+	else
+		local defaultFolder = GD.Config.DefaultFolder
+		ensureFolder(defaultFolder)
+		savePath = `{defaultFolder}/structure.md`
+	end
+
+	local ok, err = pcall(env.writefile, savePath, content)
+	if ok then
+		print(`GD: ✓ Structure saved to {savePath}`)
+	else
+		warn(`GD: Failed to save structure: {tostring(err)}`)
+	end
+
+	return content, savePath
+end
+
+-- Get remote events and functions
+GD.GetRemotes = function(): {RemoteEvents: {RemoteEvent}, RemoteFunctions: {RemoteFunction}}
+	local remotes = {
+		RemoteEvents = {} :: {RemoteEvent},
+		RemoteFunctions = {} :: {RemoteFunction}
+	}
 	
-	print(("GD: Found %d RemoteEvents, %d RemoteFunctions"):format(#remotes.RemoteEvents, #remotes.RemoteFunctions))
+	for _, obj in game:GetDescendants() do
+		if isFromCoreService(obj) then
+			continue
+		end
+		
+		if obj:IsA("RemoteEvent") then
+			table.insert(remotes.RemoteEvents, obj)
+		elseif obj:IsA("RemoteFunction") then
+			table.insert(remotes.RemoteFunctions, obj)
+		end
+	end
+	
+	print(`GD: Found {#remotes.RemoteEvents} RemoteEvents, {#remotes.RemoteFunctions} RemoteFunctions`)
 	return remotes
 end
 
 -- Quick path access
-GD.Get = function(path)
-	local current = game
-	for _, part in pairs(path:split(".")) do
-		current = current:FindFirstChild(part)
-		if not current then
-			warn(("GD.Get: Path not found at '%s'"):format(part))
+GD.Get = function(path: string): any?
+	local current: Instance = game
+	for _, part in path:split(".") do
+		local child = current:FindFirstChild(part)
+		if not child then
+			warn(`GD.Get: Path not found at '{part}'`)
 			return nil
 		end
+		current = child
 	end
 	
 	if current:IsA("LuaSourceContainer") then
@@ -15836,6 +15989,10 @@ SEARCH:
   GD.Find("pattern")        - Find scripts by name
   GD.Find("pattern", true)  - Find and save all matches
 
+STRUCTURE:
+  GD.ExportStructure()      - Export full game tree to structure.md
+  GD.ExportStructure(inst)  - Export tree from specific instance
+
 UTILITY:
   GD.Get("path.to.script")  - Quick decompile by path
   GD.GetRemotes()           - List all RemoteEvents/Functions
@@ -15857,18 +16014,20 @@ EXAMPLES:
   GD.Get("ReplicatedStorage.Shared.Module")
 
 OUTPUT FOLDERS (in executor workspace):
-  <GameName>_Dump_YYYY-MM-DD/
+  <GameName>_Dump_YYYY-MM-DD/        (includes structure.md)
   <GameName>_<ServiceName>_YYYY-MM-DD/
   <GameName>_Core_YYYY-MM-DD/
   <GameName>_Search_<pattern>/
+  <GameName>_Decompiled/structure.md  (standalone export)
 ========================================
 ]])
 end
 
 print("========================================")
 print("🎮 Universal Game Decompiler Loaded!")
-print(("📍 Detected Game: %s"):format(GD.Config.GameName))
+print(`📍 Detected Game: {GD.Config.GameName}`)
 print("📁 Output: executor workspace folder")
 print("💡 Type 'GD.Help()' for commands")
 print("⚡ Quick dump: GD.DumpAll()")
+print("🗂️ Structure: GD.ExportStructure()")
 print("========================================")
