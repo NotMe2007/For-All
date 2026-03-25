@@ -1,6 +1,6 @@
 # For-All
 
-# Join our Discord [https://discord.gg/5SnRzS38SC] this supports us 
+# Join our Discord [https://discord.gg/5SnRzS38SC] 
 
 Universal Roblox script collection with smart game detection and organized folder structure.
 
