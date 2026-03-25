@@ -1,5 +1,7 @@
 # For-All
 
+# Join our Discord [https://discord.gg/5SnRzS38SC] this supports us 
+
 Universal Roblox script collection with smart game detection and organized folder structure.
 
 ---
@@ -201,5 +203,5 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/mai
 ---
 
 ## 📜 Credits
-`Please join our discord ` - [https://discord.gg/5SnRzS38SC]
+`Please join our Discord` - [https://discord.gg/5SnRzS38SC]
 `Based on Prometheus by Elias Oelschner` - [https://github.com/prometheus-lua/Prometheus](https://github.com/prometheus-lua/Prometheus)
