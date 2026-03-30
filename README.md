@@ -53,15 +53,11 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/mai
 
 **Features:**
 
-- Kill Aura with intelligent targeting and range detection
-- Auto Farm with zone progression and mob detection
-- Auto Dodge with projectile avoidance
-- Tower/Dungeon automation (all towers supported)
-- Pet Aura with automatic pet management
-- Auto Bank, Auto Sell, and Auto Rewards
-- World Events automation
-- Anti-cheat bypass and protection systems
-- Ray field UI with extensive customization options
+- Auto Attack
+- Auto farm
+-----------------------------
+Rest is buggy beta script being worked on
+-----------------------------
 
 ```lua
 loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/main/Games/WorldZero/WorldZero_Obfuscated.lua"))()
@@ -71,11 +67,11 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/mai
 ### 🛡️ Privet (Mental Hub / COS)
 
 **Features:**
- - Unknown still in testing
+ - Unknown is still in beta 
 
 ```lua
 
-loadstring(game:HttpGet("to be added"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/refs/heads/main/Games/Misc/COS.obfuscated.lua"))()
 ```
 ---
 
@@ -89,12 +85,12 @@ loadstring(game:HttpGet("to be added"))()
 - Auto Mastery upgrades when available
 - Auto Material refining (Electro/Forge with stacking logic)
 - Auto Rebirth when affordable
-- Balanced Bone Upgrades (keeps all bones at same level)
+- Balanced Bone Upgrades (keeps all bones at the same level)
 - Auto Pal rolling with free tickets
 - Auto Daily Cookies claiming
 - Auto Forge with start/claim automation
-- Spin Speed Slider (30-120 deg/frame)
-- Material hunting with target modifiers
+- Spin Speed Slider (30-120 deg/frame) 
+- Material hunting with target modifiers (beta)
 
 ```lua
 loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/main/Games/Misc/BreakYourBones.lua"))()
@@ -113,7 +109,6 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/mai
 - Auto Rebirth system
 - World progression automation
 - Achievement claiming
-- Rayfield UI with full customization
 
 ```lua
 loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/main/Games/Misc/Pickaxe%20Sim.lua"))()
@@ -125,19 +120,10 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/mai
 Complete Tank Simulator automation with combat enhancement and utility features.
 
 **Features:**
-
-- Auto Fire with intelligent targeting 
-- Auto Spin 
-- Tank/Player ESP with visual indicators
-- Auto Respawn system
-- Teleport features and mobility tools
-- Real-time stats display
-- Level and Gems duplication exploits
-- Auto Claim XP and rewards
-- Damage Aura for enhanced combat
-- Bullet Speed manipulation
-- Fixed Walk Speed (continuous)
-- Anti-detection measures
+ - bad system
+ - bad fatchers
+ - bad script
+ - Do not use
 
 ```lua
 loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/main/Games/Misc/TankSimulator_Script.lua"))()
@@ -154,7 +140,6 @@ Visual enhancement script for the Descent game.
 - Item drop highlighting
 - Full bright lighting (removes darkness)
 - Auto-refresh every 10 seconds
-
 ---
 
 ```lua
@@ -166,7 +151,12 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/mai
 
 ### 🔢 Watch Numbers Go Up
 
-A simple idle/incremental script that automatically watches numbers go up.
+A simple idle/incremental script 
+ - Auto Buy upgrades
+ - Auto reburth
+ - Auto accend
+ - Auto get runes
+⚠️ This script is used for testing and might be detected. Use at your own risk, real script in our Discord
 
 ```lua
 loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/main/Games/Misc/watch%20numbers%20go%20up.lua"))()
