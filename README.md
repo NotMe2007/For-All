@@ -22,6 +22,7 @@ For-All/
 │       ├── TankSimulator_Script.lua
 │       ├── hohohub.lua
 │       ├── SOLSRNG.lua
+│       ├── Creatures of Sonaria
 │       └── watch numbers go up.lua
 └── README.md
 ```
@@ -64,6 +65,17 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/mai
 
 ```lua
 loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/main/Games/WorldZero/WorldZero_Obfuscated.lua"))()
+```
+---
+
+### 🛡️ Privet (Mental Hub / COS)
+
+**Features:**
+ - Unknown still in testing
+
+```lua
+
+loadstring(game:HttpGet("to be added"))()
 ```
 ---
 
