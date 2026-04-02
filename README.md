@@ -11,20 +11,23 @@ Universal Roblox script collection with smart game detection and organized folde
 ```repo
 For-All/
 ├── Universal/               # Tools that work with ALL games
-│   └── dex.lua             # Universal Dex++ with smart game detection
+│   ├── dex.lua
+│   └── dexex.lua
 ├── Games/                  # Game-specific scripts (organized)
-│   ├── WorldZero/          # World Zero obfuscated scripts
-│   ├── FarmAFish/          # Farm A Fish scripts
-│   ├── Descent/            # Descent scripts
-│   └── Misc/               # Miscellaneous scripts
+│   ├── WorldZero/
+│   │   └── WorldZero_Obfuscated.lua
+│   ├── FarmAFish/
+│   │   └── FarmAFish.lua
+│   ├── Descent/
+│   │   └── Descent.lua
+│   └── Misc/
 │       ├── BreakYourBones.lua
-│       ├── Pickaxe Sim.lua
-│       ├── TankSimulator_Script.lua
+│       ├── COS.obfuscated.lua
 │       ├── hohohub.lua
+│       ├── Pickaxe Sim.lua
 │       ├── SOLSRNG.lua
-│       ├── Creatures of Sonaria
+│       ├── TankSimulator_Script.lua
 │       └── watch numbers go up.lua
-└── README.md
 ```
 
 ---
@@ -43,6 +46,7 @@ For-All/
 
 ```lua
 loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/main/Universal/dex.lua"))()
+
 ```
 
 
@@ -55,25 +59,34 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/mai
 
 - Auto Attack
 - Auto farm
------------------------------
-Rest is buggy beta script being worked on
------------------------------
 
 ```lua
 loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/main/Games/WorldZero/WorldZero_Obfuscated.lua"))()
 ```
 ---
 
-### 🛡️ Privet (Mental Hub / COS)
+### 🎣 Farm A Fish
 
 **Features:**
- - Unknown is still in beta 
+
+- Automates farming in Farm A Fish (customize as needed)
 
 ```lua
-
-loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/refs/heads/main/Games/Misc/COS.obfuscated.lua"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/main/Games/FarmAFish/FarmAFish.lua"))()
 ```
 ---
+
+### 🔢 SOLSRNG
+
+**Features:**
+
+- RNG utilities and scripts for Sol's RNG
+
+```lua
+loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/main/Games/Misc/SOLSRNG.lua"))()
+```
+---
+
 
 ### ⚡ Break Your Bones
 

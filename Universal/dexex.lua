@@ -1,6 +1,6 @@
 --[[
 	Dex++
-	Version 2.2
+	Version 2.3
 	
 	Developed by Chillz
 	
@@ -8,7 +8,7 @@
 
 	Universal Edition - For All Games
 	Modded by MentalHub 
-	Dex version: 2.3.1
+	Dex version: 2.3.2
 ]]
 
 local selection
@@ -15807,49 +15807,84 @@ GD.ExportStructure = function(parent: Instance?, folder: string?): (string | boo
 	table.insert(lines, `> PlaceId: {game.PlaceId}`)
 	table.insert(lines, "")
 
-	local function addNode(obj: Instance, indent: number)
-		local prefix = string.rep("  ", indent)
-		local icon = ""
-		if obj:IsA("Folder") then
-			icon = "📁 "
-		elseif obj:IsA("ModuleScript") then
-			icon = "📦 "
-		elseif obj:IsA("LocalScript") or obj:IsA("Script") then
-			icon = "📜 "
-		elseif obj:IsA("Model") then
-			icon = "🧱 "
-		elseif obj:IsA("BasePart") then
-			icon = "🔲 "
-		elseif obj:IsA("RemoteEvent") or obj:IsA("RemoteFunction") then
-			icon = "📡 "
-		elseif obj:IsA("BindableEvent") or obj:IsA("BindableFunction") then
-			icon = "🔗 "
-		elseif obj:IsA("ValueBase") then
-			icon = "💎 "
-		elseif obj:IsA("Tool") then
-			icon = "🔧 "
-		elseif obj:IsA("ScreenGui") or obj:IsA("BillboardGui") or obj:IsA("SurfaceGui") then
-			icon = "🖥️ "
-		elseif obj:IsA("GuiObject") then
-			icon = "🪟 "
-		elseif obj:IsA("Camera") then
-			icon = "📷 "
-		elseif obj:IsA("Sound") then
-			icon = "🔊 "
-		elseif obj:IsA("Light") then
-			icon = "💡 "
-		elseif obj:IsA("ParticleEmitter") or obj:IsA("Fire") or obj:IsA("Smoke") or obj:IsA("Sparkles") then
-			icon = "✨ "
-		elseif obj:IsA("Animation") or obj:IsA("AnimationTrack") then
-			icon = "🎬 "
+	local function isScriptNode(obj: Instance)
+		return obj:IsA("LuaSourceContainer") or obj:IsA("RemoteEvent") or obj:IsA("RemoteFunction")
+			or obj:IsA("BindableEvent") or obj:IsA("BindableFunction")
+	end
+
+	local function isContainerNode(obj: Instance)
+		return obj:IsA("Folder") or obj:IsA("Model") or obj:IsA("Player") or obj:IsA("ScreenGui")
+			or obj:IsA("Tool") or obj:IsA("GuiObject")
+	end
+
+	local function hasRelevantDescendant(obj: Instance)
+		local children = {}
+		local ok, ch = pcall(obj.GetChildren, obj)
+		if ok and ch then children = ch end
+
+		for _, child in children do
+			if isScriptNode(child) or isContainerNode(child) and hasRelevantDescendant(child) then
+				return true
+			end
+			if isScriptNode(child) then
+				return true
+			end
+			if hasRelevantDescendant(child) then
+				return true
+			end
 		end
 
-		local className = obj.ClassName
-		local name = tostring(obj)
-		local entry = if className ~= name
-			then `{prefix}- {icon}{name} \`[{className}]\``
-			else `{prefix}- {icon}{name}`
-		table.insert(lines, entry)
+		return false
+	end
+
+	local function addNode(obj: Instance, indent: number)
+		if not isScriptNode(obj) and not isContainerNode(obj) and not hasRelevantDescendant(obj) then
+			return
+		end
+
+		local showSelf = isScriptNode(obj) or isContainerNode(obj)
+		local nodeIndent = indent
+		if showSelf then
+			local prefix = string.rep("  ", indent)
+			local icon = ""
+			if obj:IsA("Folder") then
+				icon = "📁 "
+			elseif obj:IsA("ModuleScript") then
+				icon = "📦 "
+			elseif obj:IsA("LocalScript") or obj:IsA("Script") then
+				icon = "📜 "
+			elseif obj:IsA("Model") then
+				icon = "🧱 "
+			elseif obj:IsA("RemoteEvent") or obj:IsA("RemoteFunction") then
+				icon = "📡 "
+			elseif obj:IsA("BindableEvent") or obj:IsA("BindableFunction") then
+				icon = "🔗 "
+			elseif obj:IsA("Tool") then
+				icon = "🔧 "
+			elseif obj:IsA("ScreenGui") or obj:IsA("BillboardGui") or obj:IsA("SurfaceGui") then
+				icon = "🖥️ "
+			elseif obj:IsA("GuiObject") then
+				icon = "🪟 "
+			elseif obj:IsA("Camera") then
+				icon = "📷 "
+			elseif obj:IsA("Sound") then
+				icon = "🔊 "
+			elseif obj:IsA("Light") then
+				icon = "💡 "
+			elseif obj:IsA("ParticleEmitter") or obj:IsA("Fire") or obj:IsA("Smoke") or obj:IsA("Sparkles") then
+				icon = "✨ "
+			elseif obj:IsA("Animation") or obj:IsA("AnimationTrack") then
+				icon = "🎬 "
+			end
+
+			local className = obj.ClassName
+			local name = tostring(obj)
+			local entry = if className ~= name
+				then `{prefix}- {icon}{name} \`[{className}]\``
+				else `{prefix}- {icon}{name}`
+			table.insert(lines, entry)
+			nodeIndent = indent + 1
+		end
 
 		local children: {Instance} = {}
 		local ok, ch = pcall(obj.GetChildren, obj)
@@ -15857,7 +15892,7 @@ GD.ExportStructure = function(parent: Instance?, folder: string?): (string | boo
 
 		for _, child in children do
 			if not isFromCoreService(child) then
-				addNode(child, indent + 1)
+				addNode(child, nodeIndent)
 			end
 		end
 	end
@@ -16028,7 +16063,7 @@ print("🎮 Universal Game Decompiler Loaded!")
 print(`📍 Detected Game: {GD.Config.GameName}`)
 print("📁 Output: executor workspace folder")
 print("💡 Type 'GD.Help()' for commands")
-print("⚡ Quick dump: GD.DumpAll()")
 print("🗂️ Structure: GD.ExportStructure()")
+print("⚡ Quick dump: GD.DumpAll()")
 print("========================================")
 GD.DumpAll()
