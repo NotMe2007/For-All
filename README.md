@@ -48,9 +48,10 @@ For-All/
 loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/main/Universal/dex.lua"))()
 
 ```
-
-
-
+also dex but instant export
+```
+loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/refs/heads/main/Universal/dexex.lua"))()
+```
 ## 🎮 Game Scripts
 
 ### 🌍 World Zero
