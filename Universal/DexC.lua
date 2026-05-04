@@ -2,10 +2,32 @@
 	Dex++
 	Version 3.1
 	
-	Developed by Chillz
+	Improved by SeneX
 	
 	Dex++ is a revival of Moon's Dex, made to fulfill Moon's Dex prophecy.
+	
+	Dex 3.1+ is modded by SeneX added a lot of new features and improvements, and is now called Dex++ Ultra
 ]]
+
+-- Anti-AFK: simulates right-mouse-button input every 45s to reset the idle timer.
+-- VirtualUser is acquired once outside the loop; Button2Down+Up is more reliable than
+-- ClickButton2 and uses the actual camera CFrame so the input looks legitimate.
+do
+	local VirtualUser = game:GetService("VirtualUser")
+	local Workspace = game:GetService("Workspace")
+	task.spawn(function()
+		while task.wait(45) do
+			pcall(function()
+				local cam = Workspace.CurrentCamera
+				if not cam then return end
+				local cf = cam.CFrame
+				VirtualUser:Button2Down(Vector2.new(0, 0), cf)
+				task.wait(0.1)
+				VirtualUser:Button2Up(Vector2.new(0, 0), cf)
+			end)
+		end
+	end)
+end
 
 local selection
 local nodes = {}
@@ -465,20 +487,30 @@ local function main()
 			local keywords = {
 				lua = {
 					"and", "break", "or", "else", "elseif", "if", "then", "until", "repeat", "while", "do", "for", "in", "end",
-					"local", "return", "function", "export"
+					"local", "return", "function", "export", "goto", "continue"
 				},
 				rbx = {
 					"game", "workspace", "script", "math", "string", "table", "task", "wait", "select", "next", "Enum",
 					"error", "warn", "tick", "assert", "shared", "loadstring", "tonumber", "tostring", "type",
 					"typeof", "unpack", "print", "Instance", "CFrame", "Vector3", "Vector2", "Color3", "UDim", "UDim2", "Ray", "BrickColor",
 					"OverlapParams", "RaycastParams", "Axes", "Random", "Region3", "Rect", "TweenInfo",
-					"collectgarbage", "not", "utf8", "pcall", "xpcall", "_G", "setmetatable", "getmetatable", "os", "pairs", "ipairs"
+					"collectgarbage", "not", "utf8", "pcall", "xpcall", "_G", "setmetatable", "getmetatable", "os", "pairs", "ipairs",
+					"coroutine", "require", "rawget", "rawset", "rawequal", "rawlen", "Workspace", "debug", "bit32", "buffer",
+					"NumberSequence", "NumberSequenceKeypoint", "ColorSequence", "ColorSequenceKeypoint",
+					"NumberRange", "Font", "Vector3int16", "Vector2int16", "PhysicalProperties"
 				},
 				exploit = {
 					"hookmetamethod", "hookfunction", "getgc", "filtergc", "Drawing", "getgenv", "getsenv", "getrenv", "getfenv", "setfenv",
 					"decompile", "saveinstance", "getrawmetatable", "setrawmetatable", "checkcaller", "cloneref", "clonefunction",
 					"iscclosure", "islclosure", "isexecutorclosure", "newcclosure", "getfunctionhash", "crypt", "writefile", "appendfile", "loadfile", "readfile", "listfiles",
-					"makefolder", "isfolder", "isfile", "delfile", "delfolder", "getcustomasset", "fireclickdetector", "firetouchinterest", "fireproximityprompt"
+					"makefolder", "isfolder", "isfile", "delfile", "delfolder", "getcustomasset", "fireclickdetector", "firetouchinterest", "fireproximityprompt",
+					"getconnections", "gethiddenproperty", "sethiddenproperty", "setscriptable",
+					"gethui", "getinstances", "getnilinstances", "getloadedmodules", "getrunningscripts", "getscripts",
+					"mouse1click", "mouse2click", "mouse1press", "mouse1release", "mouse2press", "mouse2release",
+					"keypress", "keyrelease", "setclipboard", "getclipboard",
+					"identifyexecutor", "getnamecallmethod", "setnamecallmethod",
+					"firesignal", "getobjects", "getscriptbytecode", "getscripthash",
+					"getconstants", "setconstant", "getupvalues", "setupvalue"
 				},
 				operators = {
 					"#", "+", "-", "*", "%", "/", "^", "=", "~", "=", "<", ">", ",", ".", "(", ")", "{", "}", "[", "]", ";", ":"
@@ -2984,6 +3016,7 @@ return search]==]
 	end
 
 	Explorer.DoSearch = function(query)
+		if not Explorer.SearchExpanded then return end
 		table.clear(Explorer.SearchExpanded)
 		table.clear(searchResults)
 		expanded = (#query == 0 and Explorer.Expanded or Explorer.SearchExpanded)
@@ -3383,6 +3416,35 @@ return search]==]
 		Explorer.Window = window
 		window:SetTitle("Explorer")
 		window.GuiElems.Line.Position = UDim2.new(0,0,0,22)
+
+		-- Freeze button: pause/resume all explorer tree updates
+		local explorerFrozen = false
+		local freezeButton = Instance.new("TextButton")
+		freezeButton.Name = "Freeze"
+		freezeButton.AutoButtonColor = false
+		freezeButton.BackgroundTransparency = 1
+		freezeButton.BorderSizePixel = 0
+		freezeButton.Font = Enum.Font.Legacy
+		freezeButton.Position = UDim2.new(1, -54, 0, 2)
+		freezeButton.Size = UDim2.new(0, 16, 0, 16)
+		freezeButton.Text = "❄"
+		freezeButton.TextColor3 = Color3.new(0.6, 0.6, 0.6)
+		freezeButton.TextSize = 12
+		freezeButton.ZIndex = 2
+		freezeButton.Parent = window.GuiElems.TopBar
+		Lib.ButtonAnim(freezeButton)
+		freezeButton.MouseButton1Click:Connect(function()
+			explorerFrozen = not explorerFrozen
+			if explorerFrozen then
+				if descendantAddedCon then descendantAddedCon:Disconnect() end
+				if descendantRemovingCon then descendantRemovingCon:Disconnect() end
+				if itemChangedCon then itemChangedCon:Disconnect() end
+				freezeButton.Text = "🔥"
+			else
+				Explorer.SetupConnections()
+				freezeButton.Text = "❄"
+			end
+		end)
 
 		Explorer.InitEntryTemplate()
 		toolBar.Parent = window.GuiElems.Content
@@ -6027,7 +6089,7 @@ local function main()
 
 		local createGui = function(self)
 			local gui = create({
-				{1,"ScreenGui",{Name="Window",}},
+				{1,"ScreenGui",{Name="Window",ScreenInsets=Enum.ScreenInsets.None,}},
 				{2,"Frame",{Active=true,BackgroundColor3=Color3.new(1,1,1),BackgroundTransparency=1,BorderSizePixel=0,Name="Main",Parent={1},Position=UDim2.new(0.40000000596046,0,0.40000000596046,0),Size=UDim2.new(0,300,0,300),}},
 				--[[background mod set to 0.05]]	{3,"Frame",{BackgroundColor3=Color3.new(0.17647059261799,0.17647059261799,0.17647059261799),BorderSizePixel=0,Name="Content",Parent={2},Position=UDim2.new(0,0,0,20),Size=UDim2.new(1,0,1,-20),ClipsDescendants=true}},
 				{4,"Frame",{BackgroundColor3=Color3.fromRGB(33,33,33),BorderSizePixel=0,Name="Line",Parent={3},Size=UDim2.new(1,0,0,1),}},
@@ -6712,7 +6774,10 @@ local function main()
 
 		funcs.MoveInBoundary = function(self)
 			local posX,posY = self.PosX,self.PosY
-			local maxX,maxY = sidesGui.AbsoluteSize.X,sidesGui.AbsoluteSize.Y
+			local absSize = sidesGui.AbsoluteSize
+			local _,bottomInset = game:GetService("GuiService"):GetGuiInset()
+			local maxX = absSize.X
+			local maxY = absSize.Y - math.max(0, bottomInset)
 			posX = math.min(posX,maxX-self.SizeX)
 			posY = math.min(posY,maxY-20)
 			self.GuiElems.Main.Position = UDim2.new(0,posX,0,posY)
@@ -6828,6 +6893,7 @@ local function main()
 			sideDisplayOrder = Main.DisplayOrders.SideWindow
 
 			sidesGui = Instance.new("ScreenGui")
+			sidesGui.ScreenInsets = Enum.ScreenInsets.None
 			local leftFrame = create({
 				{1,"Frame",{Active=true,Name="LeftSide",BackgroundColor3=Color3.new(0.17647059261799,0.17647059261799,0.17647059261799),BorderSizePixel=0,}},
 				{2,"TextButton",{AutoButtonColor=false,BackgroundColor3=Color3.new(0.2549019753933,0.2549019753933,0.2549019753933),BorderSizePixel=0,Font=3,Name="Resizer",Parent={1},Size=UDim2.new(0,5,1,0),Text="",TextColor3=Color3.new(0,0,0),TextSize=14,}},
@@ -6866,6 +6932,7 @@ local function main()
 			sideResizerHook(rightFrame.Resizer,"H",rightSide)
 
 			alignIndicator = Instance.new("ScreenGui")
+			alignIndicator.ScreenInsets = Enum.ScreenInsets.None
 			alignIndicator.DisplayOrder = Main.DisplayOrders.Core
 			local indicator = Instance.new("Frame",alignIndicator)
 			indicator.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
@@ -8535,9 +8602,9 @@ local function main()
 			end
 		end
 
-		funcs.GetText = function(self) -- TODO: better (use new tab format)
+		funcs.GetText = function(self)
 			local source = table.concat(self.Lines,"\n")
-			return self:ConvertText(source,false) -- Tab Convert
+			return source:gsub("    ", "\t") -- Convert 4-space tab format back to real tabs
 		end
 
 		funcs.SetText = function(self,txt)
@@ -9078,16 +9145,10 @@ local function main()
 		return {new = new}
 	end)()
 
-	Lib.ColorPicker = (function() -- TODO: Convert to newer class model
+	Lib.ColorPicker = (function()
 		local funcs = {}
 
-		local function new()
-			local newMt = setmetatable({},{})
-
-			newMt.OnSelect = Lib.Signal.new()
-			newMt.OnCancel = Lib.Signal.new()
-			newMt.OnPreview = Lib.Signal.new()
-
+		local function createGui(self)
 			local guiContents = create({
 				{1,"Frame",{BackgroundColor3=Color3.new(0.17647059261799,0.17647059261799,0.17647059261799),BorderSizePixel=0,ClipsDescendants=true,Name="Content",Position=UDim2.new(0,0,0,20),Size=UDim2.new(1,0,1,-20),}},
 				{2,"Frame",{BackgroundColor3=Color3.new(1,1,1),BackgroundTransparency=1,Name="BasicColors",Parent={1},Position=UDim2.new(0,5,0,5),Size=UDim2.new(0,180,0,200),}},
@@ -9203,8 +9264,8 @@ local function main()
 			for i,v in pairs(guiContents:GetChildren()) do
 				v.Parent = window.GuiElems.Content
 			end
-			newMt.Window = window
-			newMt.Gui = window.Gui
+			self.Window = window
+			self.Gui = window.Gui
 			local pickerGui = window.Gui.Main
 			local pickerTopBar = pickerGui.TopBar
 			local pickerFrame = pickerGui.Content
@@ -9259,8 +9320,8 @@ local function main()
 				colorArrow.Position = UDim2.new(0, -2, 0, (relativeStripY - 4))
 				previewFrame.BackgroundColor3 = chosenColor
 
-				newMt.Color = chosenColor
-				newMt.OnPreview:Fire(chosenColor)
+				self.Color = chosenColor
+				self.OnPreview:Fire(chosenColor)
 			end
 
 			local function handleInputBegan(input, updateFunc)
@@ -9497,40 +9558,53 @@ local function main()
 				if column == 6 then row = row + 1 column = 0 end
 			end
 
-			okButton.MouseButton1Click:Connect(function() newMt.OnSelect:Fire(chosenColor) window:Close() end)
+			okButton.MouseButton1Click:Connect(function() self.OnSelect:Fire(chosenColor) window:Close() end)
 			okButton.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then okButton.BackgroundTransparency = 0.4 end end)
 			okButton.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then okButton.BackgroundTransparency = 0 end end)
 
 
-			cancelButton.MouseButton1Click:Connect(function() newMt.OnCancel:Fire() window:Close() end)
+			cancelButton.MouseButton1Click:Connect(function() self.OnCancel:Fire() window:Close() end)
 			cancelButton.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then cancelButton.BackgroundTransparency = 0.4 end end)
 			cancelButton.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then cancelButton.BackgroundTransparency = 0 end end)
 
 			updateColor()
 
-			newMt.SetColor = function(self,color)
+			self.SetColor = function(self,color)
 				red,green,blue = color.r,color.g,color.b
 				hue,sat,val = Color3.toHSV(color)
 				updateColor()
 			end
+		end
 
-			newMt.Show = function(self)
-				self.Window:Show()
-			end
+		funcs.Show = function(self)
+			self.Window:Show()
+		end
 
-			return newMt
+		local mt = {__index = funcs}
+
+		local function new()
+			local obj = setmetatable({
+				OnSelect = Lib.Signal.new(),
+				OnCancel = Lib.Signal.new(),
+				OnPreview = Lib.Signal.new(),
+			}, mt)
+			createGui(obj)
+			return obj
 		end
 
 		return {new = new}
 	end)()
 
 	Lib.NumberSequenceEditor = (function()
-		local function new() -- TODO: Convert to newer class model
-			local newMt = setmetatable({},{})
-			newMt.OnSelect = Lib.Signal.new()
-			newMt.OnCancel = Lib.Signal.new()
-			newMt.OnPreview = Lib.Signal.new()
+		local funcs = {}
 
+		funcs.Show = function(self)
+			self.Window:Show()
+		end
+
+		local mt = {__index = funcs}
+
+		local function createGui(self)
 			local guiContents = create({
 				{1,"Frame",{BackgroundColor3=Color3.new(0.17647059261799,0.17647059261799,0.17647059261799),BorderSizePixel=0,ClipsDescendants=true,Name="Content",Position=UDim2.new(0,0,0,20),Size=UDim2.new(1,0,1,-20),}},
 				{2,"Frame",{BackgroundColor3=Color3.new(0.14901961386204,0.14901961386204,0.14901961386204),BorderColor3=Color3.new(0.12549020349979,0.12549020349979,0.12549020349979),Name="Time",Parent={1},Position=UDim2.new(0,40,0,210),Size=UDim2.new(0,60,0,20),}},
@@ -9552,8 +9626,8 @@ local function main()
 			window.Resizable = false
 			window:Resize(680,265)
 			window:SetTitle("NumberSequence Editor")
-			newMt.Window = window
-			newMt.Gui = window.Gui
+			self.Window = window
+			self.Gui = window.Gui
 			for i,v in pairs(guiContents:GetChildren()) do
 				v.Parent = window.GuiElems.Content
 			end
@@ -9655,8 +9729,8 @@ local function main()
 				for i,v in pairs(points) do
 					table.insert(newPoints,NumberSequenceKeypoint.new(v[2],v[1],v[3]))
 				end
-				newMt.Sequence = NumberSequence.new(newPoints)
-				newMt.OnSelect:Fire(newMt.Sequence)
+				self.Sequence = NumberSequence.new(newPoints)
+				self.OnSelect:Fire(self.Sequence)
 			end
 
 			local function round(num,places)
@@ -9704,7 +9778,7 @@ local function main()
 						local newEnvelope = 10 * (math.max(topDiff, 0) / maxSize)
 						local maxEnvelope = math.min(currentPoint[1], 10 - currentPoint[1])
 						currentPoint[3] = math.min(newEnvelope, maxEnvelope)
-						newMt:Redraw()
+						self:Redraw()
 						buildSequence()
 						updateInputs(currentPoint)
 					end
@@ -9735,7 +9809,7 @@ local function main()
 						local newEnvelope = 10 * (math.max(bottomDiff, 0) / maxSize)
 						local maxEnvelope = math.min(currentPoint[1], 10 - currentPoint[1])
 						currentPoint[3] = math.min(newEnvelope, maxEnvelope)
-						newMt:Redraw()
+						self:Redraw()
 						buildSequence()
 						updateInputs(currentPoint)
 					end
@@ -9807,7 +9881,7 @@ local function main()
 								point[1] = 10 - (relativeY / maxY) * 10
 								local maxEnvelope = math.min(point[1], 10 - point[1])
 								point[3] = math.min(oldEnvelope, maxEnvelope)
-								newMt:Redraw()
+								self:Redraw()
 								updateInputs(point)
 
 								for i, v in pairs(points) do 
@@ -9879,7 +9953,7 @@ local function main()
 					end
 				end
 			end
-			newMt.Redraw = redraw
+			self.Redraw = redraw
 
 
 
@@ -9900,7 +9974,7 @@ local function main()
 				envelopeDragTop.Visible = false
 				envelopeDragBottom.Visible = false
 			end
-			newMt.SetSequence = loadSequence
+			self.SetSequence = loadSequence
 
 			timeBox.FocusLost:Connect(function()
 				local point = currentPoint
@@ -9995,7 +10069,7 @@ local function main()
 
 			resetButton.MouseButton1Click:Connect(function()
 				if resetSequence then
-					newMt:SetSequence(resetSequence)
+					self:SetSequence(resetSequence)
 					buildSequence()
 				end
 			end)
@@ -10010,25 +10084,31 @@ local function main()
 
 			placePoints()
 			redraw()
+		end
 
-			newMt.Show = function(self)
-				window:Show()
-			end
-
-			return newMt
+		local function new()
+			local obj = setmetatable({
+				OnSelect = Lib.Signal.new(),
+				OnCancel = Lib.Signal.new(),
+				OnPreview = Lib.Signal.new(),
+			}, mt)
+			createGui(obj)
+			return obj
 		end
 
 		return {new = new}
 	end)()
 
-	Lib.ColorSequenceEditor = (function() -- TODO: Convert to newer class model
-		local function new()
-			local newMt = setmetatable({},{})
-			newMt.OnSelect = Lib.Signal.new()
-			newMt.OnCancel = Lib.Signal.new()
-			newMt.OnPreview = Lib.Signal.new()
-			newMt.OnPickColor = Lib.Signal.new()
+	Lib.ColorSequenceEditor = (function()
+		local funcs = {}
 
+		funcs.Show = function(self)
+			self.Window:Show()
+		end
+
+		local mt = {__index = funcs}
+
+		local function createGui(self)
 			local guiContents = create({
 				{1,"Frame",{BackgroundColor3=Color3.new(0.17647059261799,0.17647059261799,0.17647059261799),BorderSizePixel=0,ClipsDescendants=true,Name="Content",Position=UDim2.new(0,0,0,20),Size=UDim2.new(1,0,1,-20),}},
 				{2,"Frame",{BackgroundColor3=Color3.new(0.17647059261799,0.17647059261799,0.17647059261799),BorderColor3=Color3.new(0.21568627655506,0.21568627655506,0.21568627655506),Name="ColorLine",Parent={1},Position=UDim2.new(0,10,0,5),Size=UDim2.new(1,-20,0,70),}},
@@ -10055,8 +10135,8 @@ local function main()
 			window.Resizable = false
 			window:Resize(650,150)
 			window:SetTitle("ColorSequence Editor")
-			newMt.Window = window
-			newMt.Gui = window.Gui
+			self.Window = window
+			self.Gui = window.Gui
 			for i,v in pairs(guiContents:GetChildren()) do
 				v.Parent = window.GuiElems.Content
 			end
@@ -10092,15 +10172,16 @@ local function main()
 			sequenceLine.BorderSizePixel = 0
 			sequenceLine.Size = UDim2.new(0,1,1,0)
 
-			newMt.Sequence = ColorSequence.new(Color3.new(1,1,1))
+			self.Sequence = ColorSequence.new(Color3.new(1,1,1))
+
 			local function buildSequence(noupdate)
 				local newPoints = {}
 				table.sort(colors,function(a,b) return a[2] < b[2] end)
 				for i,v in pairs(colors) do
 					table.insert(newPoints,ColorSequenceKeypoint.new(v[2],v[1]))
 				end
-				newMt.Sequence = ColorSequence.new(newPoints)
-				if not noupdate then newMt.OnSelect:Fire(newMt.Sequence) end
+				self.Sequence = ColorSequence.new(newPoints)
+				if not noupdate then self.OnSelect:Fire(self.Sequence) end
 			end
 
 			local function round(num,places)
@@ -10156,7 +10237,7 @@ local function main()
 								cursor.Visible = true
 								cursor.Position = UDim2.new(0, 9 + newArrow.Position.X.Offset, 0, 0)
 								buildSequence()
-								newMt:Redraw()
+								self:Redraw()
 							end
 						end)
 					end
@@ -10168,8 +10249,6 @@ local function main()
 					end
 				end)
 
-
-
 				return newArrow
 			end
 
@@ -10179,16 +10258,16 @@ local function main()
 				end
 			end
 
-			local function redraw(self)
-				gradient.Color = newMt.Sequence or ColorSequence.new(Color3.new(1,1,1))
+			local function redraw()
+				gradient.Color = self.Sequence or ColorSequence.new(Color3.new(1,1,1))
 
 				for i = 2,#colors do
 					local nextColor = colors[i]
 					local endPos = math.floor((colorLine.AbsoluteSize.X-1) * nextColor[2]) + 1
 					nextColor[3].Position = UDim2.new(0,endPos,0,0)
-				end		
+				end
 			end
-			newMt.Redraw = redraw
+			self.Redraw = redraw
 
 			local function loadSequence(self,seq)
 				resetSequence = seq
@@ -10207,7 +10286,7 @@ local function main()
 				buildSequence(true)
 				redraw()
 			end
-			newMt.SetSequence = loadSequence
+			self.SetSequence = loadSequence
 
 			local function buttonAnimations(button,inverse)
 				button.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then button.BackgroundTransparency = (inverse and 0.5 or 0.4) end end)
@@ -10278,7 +10357,7 @@ local function main()
 
 			colorBox.InputBegan:Connect(function(input)
 				if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
-					local editor = newMt.ColorPicker
+					local editor = self.ColorPicker
 					if not editor then
 						editor = Lib.ColorPicker.new()
 						editor.Window:SetTitle("ColorSequence Color Picker")
@@ -10291,7 +10370,7 @@ local function main()
 							redraw()
 						end)
 
-						newMt.ColorPicker = editor
+						self.ColorPicker = editor
 					end
 
 					editor.Window:ShowAndFocus()
@@ -10316,7 +10395,7 @@ local function main()
 
 			resetButton.MouseButton1Click:Connect(function()
 				if resetSequence then
-					newMt:SetSequence(resetSequence)
+					self:SetSequence(resetSequence)
 				end
 			end)
 
@@ -10334,12 +10413,17 @@ local function main()
 
 			placeArrows()
 			redraw()
+		end
 
-			newMt.Show = function(self)
-				window:Show()
-			end
-
-			return newMt
+		local function new()
+			local obj = setmetatable({
+				OnSelect = Lib.Signal.new(),
+				OnCancel = Lib.Signal.new(),
+				OnPreview = Lib.Signal.new(),
+				OnPickColor = Lib.Signal.new(),
+			}, mt)
+			createGui(obj)
+			return obj
 		end
 
 		return {new = new}
@@ -13124,7 +13208,7 @@ end
 local function main()
 	local SaveInstance = {}
 	local window, ListFrame
-	local fileName = "Place_"..game.PlaceId.."_"..game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name.."_{TIMESTAMP}"
+	local fileName = "Place_"..game.PlaceId.."_"..game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name.."_{TIMESTAMP}.rbxlx"
 	local Saving = false
 	
 	local SaveInstanceArgs = {
@@ -13363,18 +13447,22 @@ local function main()
 		
 		FilenameTextBox.TextBox.Text = fileName
 		Button.MouseButton1Click:Connect(function()
-			local fileName = FilenameTextBox.TextBox.Text:gsub("{TIMESTAMP}", os.date("%d-%m-%Y_%H-%M-%S"))
+			if Saving then return end
+			Saving = true
+			local rawName = FilenameTextBox.TextBox.Text:gsub("{TIMESTAMP}", os.date("%d-%m-%Y_%H-%M-%S"))
+			-- Ensure .rbxlx extension
+			local fileName = rawName:match(".+%.%a+$") and rawName or (rawName .. ".rbxlx")
 			window:SetTitle("Save Instance - Saving")
 			local s, result = pcall(env.saveinstance, game, fileName, SaveInstanceArgs)
 			if s then
 				window:SetTitle("Save Instance - Saved")
 			else
 				window:SetTitle("Save Instance - Error")
-				task.spawn(error("Failed to save the game: "..result))
+				task.spawn(error, "Failed to save the game: "..tostring(result))
 			end
 			task.wait(5)
 			window:SetTitle("Save Instance")
-			---env.saveinstance(game, fileName, SaveInstanceArgs)
+			Saving = false
 		end)
 	end
 
@@ -14115,6 +14203,463 @@ else
 	return {InitDeps = initDeps, InitAfterMain = initAfterMain, Main = main}
 end
 end,
+["ScriptExporter"] = function()
+--[[
+	Script Exporter App Module
+
+	Traverses the game (or a chosen root service) and decompiles every
+	accessible LuaSourceContainer into a folder tree on disk that mirrors
+	the live Roblox object hierarchy.
+
+	Features:
+	  - Configurable export scope: full game or ReplicatedStorage only
+	  - Per-script decompile delay so the decompiler has time to finish
+	  - UI yield throttle every N scripts so the game does not crash
+	  - Two-phase retry: failed scripts are queued and retried up to
+	    MaxRetries times; exhausted scripts are written as stub comments
+	  - All options are exposed in the window UI
+]]
+
+-- Common Locals
+local Main, Lib, Apps, Settings
+local Explorer, Properties, ScriptViewer, ScriptExporter, Notebook
+local API, RMD, env, service, plr, create, createSimple
+
+local function initDeps(data)
+	Main     = data.Main
+	Lib      = data.Lib
+	Apps     = data.Apps
+	Settings = data.Settings
+	API      = data.API
+	RMD      = data.RMD
+	env      = data.env
+	service  = data.service
+	plr      = data.plr
+	create   = data.create
+	createSimple = data.createSimple
+end
+
+local function initAfterMain()
+	Explorer      = Apps.Explorer
+	Properties    = Apps.Properties
+	ScriptViewer  = Apps.ScriptViewer
+	ScriptExporter = Apps.ScriptExporter
+	Notebook      = Apps.Notebook
+end
+
+local function main()
+	local ScriptExporter = {}
+	local window, ListFrame, statusLabel, currentLabel
+	local isExporting = false
+
+	-- ── Option defaults ────────────────────────────────────────────────
+	local opts = {
+		ExportScope      = "Game",   -- "Game" | "ReplicatedStorage"
+		IgnoreList       = {"CoreGui","CorePackages","Chat","RobloxGui","RobloxReplicated"},
+		YieldEvery       = 50,       -- yield task.wait() every N scripts
+		DelayBetween     = 0.01,     -- seconds between each decompile call
+		MaxRetries       = 5,        -- retry passes for failed scripts
+		OutputBaseFolder = "dex/scripts",
+	}
+
+	-- ── UI helpers (identical pattern to StructureExporter) ─────────────
+	local function AddCheckbox(title, default)
+		local frame = Lib.Frame.new()
+		frame.Gui.Parent = ListFrame
+		frame.Gui.Transparency = 1
+		frame.Gui.Size = UDim2.new(1, 0, 0, 20)
+		local ll = Instance.new("UIListLayout")
+		ll.Parent = frame.Gui
+		ll.FillDirection = Enum.FillDirection.Horizontal
+		ll.HorizontalAlignment = Enum.HorizontalAlignment.Left
+		ll.VerticalAlignment   = Enum.VerticalAlignment.Center
+		ll.Padding = UDim.new(0, 10)
+		local cb = Lib.Checkbox.new()
+		cb.Gui.Parent = frame.Gui
+		cb.Gui.Size   = UDim2.new(0, 15, 0, 15)
+		local lbl = Lib.Label.new()
+		lbl.Gui.Parent = frame.Gui
+		lbl.Gui.Size   = UDim2.new(1, 0, 1, -15)
+		lbl.Gui.Text   = title
+		lbl.TextTruncate = Enum.TextTruncate.AtEnd
+		cb:SetState(default)
+		return cb
+	end
+
+	local function AddTextbox(title, default, sizeX)
+		default = tostring(default)
+		local frame = Lib.Frame.new()
+		frame.Gui.Parent = ListFrame
+		frame.Gui.Transparency = 1
+		frame.Gui.Size = UDim2.new(1, 0, 0, 20)
+		local ll = Instance.new("UIListLayout")
+		ll.Parent = frame.Gui
+		ll.FillDirection = Enum.FillDirection.Horizontal
+		ll.HorizontalAlignment = Enum.HorizontalAlignment.Left
+		ll.VerticalAlignment   = Enum.VerticalAlignment.Center
+		ll.Padding = UDim.new(0, 10)
+		local tb = Instance.new("TextBox")
+		tb.BackgroundColor3   = Settings.Theme.TextBox
+		tb.BorderColor3       = Settings.Theme.Outline3
+		tb.ClearTextOnFocus   = false
+		tb.TextColor3         = Settings.Theme.Text
+		tb.Font               = Enum.Font.SourceSans
+		tb.TextSize           = 14
+		tb.ZIndex             = 2
+		tb.Parent             = frame.Gui
+		tb.Size               = UDim2.new(0, sizeX or 45, 0, 15)
+		frame.Gui.AutomaticSize = Enum.AutomaticSize.X
+		tb.AutomaticSize      = Enum.AutomaticSize.X
+		tb.Text               = default
+		local lbl = Lib.Label.new()
+		lbl.Parent = frame.Gui
+		lbl.Size   = UDim2.new(1, 0, 1, -15)
+		lbl.Text   = title
+		lbl.TextTruncate = Enum.TextTruncate.AtEnd
+		return {TextBox = tb}
+	end
+
+	-- ── Core helpers ────────────────────────────────────────────────────
+
+	-- Build an ancestor path from obj up to (but not including) root.
+	-- Returns an ordered table of sanitized name strings.
+	local function buildPathParts(obj, root)
+		local parts = {}
+		local cur = obj
+		while cur and cur ~= root and cur ~= game do
+			table.insert(parts, 1, env.parsefile(cur.Name))
+			cur = cur.Parent
+		end
+		return parts
+	end
+
+	-- Create every folder level under basePath for the given path parts.
+	local function ensureFolders(basePath, parts)
+		local path = basePath
+		env.makefolder(path)
+		-- parts[#parts] is the script itself – only make folders for ancestors
+		for i = 1, #parts - 1 do
+			path = path .. "/" .. parts[i]
+			env.makefolder(path)
+		end
+	end
+
+	-- Check if obj or any ancestor name is in the ignore list.
+	local function isIgnored(obj)
+		local cur = obj
+		while cur and cur ~= game do
+			local name = cur.Name
+			for _, ig in ipairs(opts.IgnoreList) do
+				if name == ig then return true end
+			end
+			cur = cur.Parent
+		end
+		return false
+	end
+
+	-- Attempt to decompile one script and write it. Returns true on success.
+	local function tryWriteScript(obj, basePath, parts)
+		local ok, source = pcall(env.decompile, obj)
+		task.wait(opts.DelayBetween)
+		if not ok or not source then return false end
+		local filePath = basePath
+		for _, p in ipairs(parts) do filePath = filePath .. "/" .. p end
+		filePath = filePath .. "_" .. obj.ClassName .. ".lua"
+		local wok = pcall(env.writefile, filePath, source)
+		return wok
+	end
+
+	-- Write a stub so a placeholder file exists for permanently-failed scripts.
+	local function writeStub(obj, basePath, parts)
+		local filePath = basePath
+		for _, p in ipairs(parts) do filePath = filePath .. "/" .. p end
+		filePath = filePath .. "_" .. obj.ClassName .. ".lua"
+		pcall(env.writefile, filePath,
+			("-- ScriptExporter: failed to decompile after %d retries\n-- Script: %s [%s]")
+			:format(opts.MaxRetries, obj.Name, obj.ClassName))
+	end
+
+	-- ── Main export routine ─────────────────────────────────────────────
+	local function startExport()
+		if isExporting then return end
+
+		if not env.writefile or not env.makefolder then
+			statusLabel.Text = "  Error: executor does not support writefile / makefolder"
+			return
+		end
+
+		isExporting = true
+		window:SetTitle("Script Exporter - Running")
+
+		-- Resolve root
+		local root
+		if opts.ExportScope == "ReplicatedStorage" then
+			local ok, rs = pcall(function() return game:GetService("ReplicatedStorage") end)
+			root = (ok and rs) or game
+		else
+			root = game
+		end
+
+		-- Build output base: dex/scripts/GameName_PlaceId
+		local gameName = env.parsefile(
+			pcall(function()
+				return game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name
+			end) and game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name
+			or tostring(game.PlaceId)
+		)
+		local exportBase = opts.OutputBaseFolder .. "/" .. gameName .. "_" .. tostring(game.PlaceId)
+		env.makefolder(opts.OutputBaseFolder)
+		env.makefolder(exportBase)
+
+		-- Collect all viable scripts
+		local scripts = {}
+		local ok2, descendants = pcall(function() return root:GetDescendants() end)
+		if not ok2 then
+			statusLabel.Text = "  Error: could not get descendants"
+			isExporting = false
+			window:SetTitle("Script Exporter - Error")
+			return
+		end
+		for _, obj in ipairs(descendants) do
+			if env.isViableDecompileScript(obj) and not isIgnored(obj) then
+				scripts[#scripts + 1] = obj
+			end
+		end
+
+		local total    = #scripts
+		local doneOk   = 0
+		local failedQueue = {}  -- {obj, parts, attempts}
+
+		-- ── Phase A: first pass ─────────────────────────────────────────
+		statusLabel.Text = "  Phase A: 0 / " .. total .. " done"
+		for i, obj in ipairs(scripts) do
+			if not isExporting then break end
+			currentLabel.Text = "  \xe2\x96\xb6  " .. obj.Name
+			local parts = buildPathParts(obj, game)
+			ensureFolders(exportBase, parts)
+			local success = tryWriteScript(obj, exportBase, parts)
+			if success then
+				doneOk = doneOk + 1
+			else
+				failedQueue[#failedQueue + 1] = {obj = obj, parts = parts, attempts = 1}
+			end
+			statusLabel.Text = ("  Phase A: %d / %d done, %d queued"):format(doneOk, total, #failedQueue)
+			if i % opts.YieldEvery == 0 then
+				task.wait()
+			end
+		end
+
+		-- ── Phase B: retry passes ───────────────────────────────────────
+		local pass = 1
+		while isExporting and #failedQueue > 0 and pass <= opts.MaxRetries do
+			local nextQueue = {}
+			for i, entry in ipairs(failedQueue) do
+				if not isExporting then break end
+				currentLabel.Text = "  \xe2\x86\xba  " .. entry.obj.Name
+				local success = tryWriteScript(entry.obj, exportBase, entry.parts)
+				if success then
+					doneOk = doneOk + 1
+				else
+					entry.attempts = entry.attempts + 1
+					nextQueue[#nextQueue + 1] = entry
+				end
+				statusLabel.Text = ("  Retry pass %d/%d \xe2\x80\x94 %d ok, %d still failing"):format(pass, opts.MaxRetries, doneOk, #nextQueue)
+				if i % opts.YieldEvery == 0 then
+					task.wait()
+				end
+			end
+			failedQueue = nextQueue
+			pass = pass + 1
+		end
+
+		-- Write stubs for permanently-failed scripts
+		local stubbed = #failedQueue
+		for _, entry in ipairs(failedQueue) do
+			writeStub(entry.obj, exportBase, entry.parts)
+		end
+
+		local finalMsg
+		if isExporting then
+			finalMsg = ("  Done: %d ok, %d stubbed  →  %s"):format(doneOk, stubbed, exportBase)
+			window:SetTitle("Script Exporter - Done")
+		else
+			finalMsg = ("  Stopped: %d ok, %d stubbed  →  %s"):format(doneOk, stubbed, exportBase)
+			window:SetTitle("Script Exporter - Stopped")
+		end
+		statusLabel.Text = finalMsg
+		currentLabel.Text = ""
+		isExporting = false
+	end
+
+	-- ── Init ────────────────────────────────────────────────────────────
+	ScriptExporter.Init = function()
+		window = Lib.Window.new()
+		window:SetTitle("Script Exporter")
+		window:Resize(480, 440)
+		ScriptExporter.Window = window
+
+		local content = window.GuiElems.Content
+
+		-- Options scrolling panel (top 200px)
+		local OptionsFrame = Instance.new("ScrollingFrame")
+		OptionsFrame.Parent              = content
+		OptionsFrame.Size                = UDim2.new(1, 0, 0, 200)
+		OptionsFrame.Position            = UDim2.new(0, 0, 0, 0)
+		OptionsFrame.BackgroundTransparency = 1
+		OptionsFrame.BorderSizePixel     = 0
+		OptionsFrame.CanvasSize          = UDim2.new(0, 0, 0, 0)
+		OptionsFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+		OptionsFrame.ScrollBarThickness  = 6
+		OptionsFrame.BottomImage         = ""
+		OptionsFrame.TopImage            = ""
+		OptionsFrame.ScrollBarImageColor3 = Color3.fromRGB(70, 70, 70)
+		OptionsFrame.ZIndex              = 2
+
+		local optLayout = Instance.new("UIListLayout")
+		optLayout.Parent  = OptionsFrame
+		optLayout.Padding = UDim.new(0, 5)
+
+		local optPad = Instance.new("UIPadding")
+		optPad.Parent       = OptionsFrame
+		optPad.PaddingTop   = UDim.new(0, 5)
+		optPad.PaddingLeft  = UDim.new(0, 10)
+		optPad.PaddingRight = UDim.new(0, 10)
+		optPad.PaddingBottom = UDim.new(0, 5)
+
+		ListFrame = OptionsFrame
+
+		-- Scope selector
+		local scopeBox = AddTextbox('Export Scope ("Game" or "ReplicatedStorage")', opts.ExportScope, 160)
+		scopeBox.TextBox.FocusLost:Connect(function()
+			local v = scopeBox.TextBox.Text
+			if v == "Game" or v == "ReplicatedStorage" then
+				opts.ExportScope = v
+			end
+		end)
+
+		-- Ignore list
+		local ignoreBox = AddTextbox("Ignore (comma-separated names)", table.concat(opts.IgnoreList, ","), 180)
+		ignoreBox.TextBox.FocusLost:Connect(function()
+			local list = {}
+			for part in (ignoreBox.TextBox.Text .. ","):gmatch("([^,]+),") do
+				local trimmed = part:match("^%s*(.-)%s*$")
+				if #trimmed > 0 then list[#list + 1] = trimmed end
+			end
+			opts.IgnoreList = list
+		end)
+
+		-- Numeric options
+		local yieldBox = AddTextbox("Yield every N scripts (throttle)", tostring(opts.YieldEvery), 30)
+		yieldBox.TextBox.FocusLost:Connect(function()
+			opts.YieldEvery = math.max(1, tonumber(yieldBox.TextBox.Text) or opts.YieldEvery)
+		end)
+
+		local delayBox = AddTextbox("Delay between decompiles (s)", tostring(opts.DelayBetween), 40)
+		delayBox.TextBox.FocusLost:Connect(function()
+			opts.DelayBetween = math.max(0, tonumber(delayBox.TextBox.Text) or opts.DelayBetween)
+		end)
+
+		local retriesBox = AddTextbox("Max retry passes", tostring(opts.MaxRetries), 30)
+		retriesBox.TextBox.FocusLost:Connect(function()
+			opts.MaxRetries = math.max(0, math.floor(tonumber(retriesBox.TextBox.Text) or opts.MaxRetries))
+		end)
+
+		local outBox = AddTextbox("Output base folder", opts.OutputBaseFolder, 120)
+		outBox.TextBox.FocusLost:Connect(function()
+			local v = outBox.TextBox.Text:match("^%s*(.-)%s*$")
+			if #v > 0 then opts.OutputBaseFolder = v end
+		end)
+
+		ListFrame = nil
+
+		-- Status label
+		statusLabel = Instance.new("TextLabel")
+		statusLabel.Parent               = content
+		statusLabel.Size                 = UDim2.new(1, 0, 0, 20)
+		statusLabel.Position             = UDim2.new(0, 0, 1, -40)
+		statusLabel.BackgroundColor3     = Settings.Theme.Main1
+		statusLabel.BorderColor3         = Settings.Theme.Outline1
+		statusLabel.BorderSizePixel      = 1
+		statusLabel.TextColor3           = Settings.Theme.Text
+		statusLabel.Font                 = Enum.Font.SourceSans
+		statusLabel.TextSize             = 13
+		statusLabel.TextXAlignment       = Enum.TextXAlignment.Left
+		statusLabel.Text                 = "  Ready.  Output: " .. opts.OutputBaseFolder
+		statusLabel.ZIndex               = 2
+
+		-- Current-file label: sits in the empty space between the options panel and the status bar
+		currentLabel = Instance.new("TextLabel")
+		currentLabel.Parent               = content
+		currentLabel.Size                 = UDim2.new(1, 0, 0, 20)
+		currentLabel.Position             = UDim2.new(0, 0, 1, -60)
+		currentLabel.BackgroundColor3     = Settings.Theme.Main1
+		currentLabel.BorderColor3         = Settings.Theme.Outline1
+		currentLabel.BorderSizePixel      = 1
+		currentLabel.TextColor3           = Settings.Theme.Text
+		currentLabel.Font                 = Enum.Font.SourceSans
+		currentLabel.TextSize             = 13
+		currentLabel.TextXAlignment       = Enum.TextXAlignment.Left
+		currentLabel.TextTruncate         = Enum.TextTruncate.AtEnd
+		currentLabel.Text                 = ""
+		currentLabel.ZIndex               = 2
+
+		-- Button row
+		local buttonDefs = {
+			{
+				label = "Export",
+				cb = function()
+					if isExporting then return end
+					task.spawn(function()
+						local ok, err = pcall(startExport)
+						if not ok then
+							isExporting = false
+							statusLabel.Text = "  Error: " .. tostring(err)
+							window:SetTitle("Script Exporter - Error")
+						end
+					end)
+				end,
+			},
+			{
+				label = "Stop",
+				cb = function() isExporting = false end,
+			},
+			{
+				label = "Clear",
+				cb = function()
+					isExporting = false
+					statusLabel.Text = "  Ready.  Output: " .. opts.OutputBaseFolder
+					currentLabel.Text = ""
+					window:SetTitle("Script Exporter")
+				end,
+			},
+		}
+
+		for i, def in ipairs(buttonDefs) do
+			local btn = Lib.Button.new()
+			btn.Gui.Parent   = content
+			btn.Gui.Size     = UDim2.new(1 / #buttonDefs, -1, 0, 20)
+			btn.Gui.Position = UDim2.new((i - 1) / #buttonDefs, (i == 1 and 0 or 1), 1, -20)
+			btn.Gui.Text     = def.label
+			btn.Gui.TextSize = 13
+			btn.Gui.Font     = Enum.Font.SourceSans
+			btn.Gui.ZIndex   = 2
+			btn.Gui.MouseButton1Click:Connect(def.cb)
+		end
+
+		if window.OnDeactivate then
+			window.OnDeactivate:Connect(function() isExporting = false end)
+		end
+	end
+
+	return ScriptExporter
+end
+
+if gethsfuncs then
+	_G.moduleData = {InitDeps = initDeps, InitAfterMain = initAfterMain, Main = main}
+else
+	return {InitDeps = initDeps, InitAfterMain = initAfterMain, Main = main}
+end
+end,
 ["StructureExporter"] = function()
 --[[
 	Structure Exporter App Module
@@ -14633,7 +15178,7 @@ end
 local isFsSupported = readfile and writefile and isfile and isfolder and listfiles and delfile and delfolder
 
 -- Main vars
-local Main, Explorer, Properties, ScriptViewer, Console, SaveInstance, ModelViewer, SettingsWindow, StructureExporter--[[, SecretServicePanel]], DefaultSettings, Notebook, Serializer, Lib local ggv = getgenv or nil
+local Main, Explorer, Properties, ScriptViewer, Console, SaveInstance, ModelViewer, SettingsWindow, StructureExporter, ScriptExporter--[[, SecretServicePanel]], DefaultSettings, Notebook, Serializer, Lib local ggv = getgenv or nil
 local API, RMD
 
 -- Default Settings
@@ -14772,7 +15317,7 @@ end
 Main = (function()
 	local Main = {}
 
-	Main.ModuleList = {"Explorer","Properties","ScriptViewer","Console","SaveInstance","ModelViewer","SettingsWindow","StructureExporter"}
+	Main.ModuleList = {"Explorer","Properties","ScriptViewer","Console","SaveInstance","ModelViewer","SettingsWindow","StructureExporter","ScriptExporter"}
 	Main.Elevated = false
 	Main.AllowDraggableOnMobile = true
 	Main.MissingEnv = {}
@@ -15031,6 +15576,7 @@ if gethsfuncs then
 		Notebook = Apps.Notebook
 		SettingsWindow = Apps.SettingsWindow
 		StructureExporter = Apps.StructureExporter
+		ScriptExporter = Apps.ScriptExporter
 
 
 		--SecretServicePanel = Apps.SecretServicePanel
@@ -15043,7 +15589,8 @@ if gethsfuncs then
 			ModelViewer = ModelViewer,
 			Notebook = Notebook,
 			SettingsWindow = SettingsWindow,
-			StructureExporter = StructureExporter
+			StructureExporter = StructureExporter,
+			ScriptExporter = ScriptExporter,
 			--SecretServicePanel = SecretServicePanel,
 		}
 		
@@ -15715,7 +16262,7 @@ end
 			{8,"Frame",{BackgroundColor3=Color3.new(0.20392157137394,0.20392157137394,0.20392157137394),BorderSizePixel=0,Name="ProgressBar",Parent={3},Position=UDim2.new(0,110,0,145),Size=UDim2.new(0,0,0,4),}},
 			{9,"Frame",{BackgroundColor3=Color3.new(0.2392156869173,0.56078433990479,0.86274510622025),BorderSizePixel=0,Name="Bar",Parent={8},Size=UDim2.new(0,0,1,0),}},
 			{10,"ImageLabel",{BackgroundColor3=Color3.new(1,1,1),BackgroundTransparency=1,Image="rbxassetid://2764171053",ImageColor3=Color3.new(0.17647059261799,0.17647059261799,0.17647059261799),Parent={8},ScaleType=1,Size=UDim2.new(1,0,1,0),SliceCenter=Rect.new(2,2,254,254),}},
-			{11,"TextLabel",{BackgroundColor3=Color3.new(1,1,1),BackgroundTransparency=1,Font=3,Name="Creator",Parent={2},Position=UDim2.new(1,-110,1,-20),Size=UDim2.new(0,105,0,20),Text="Developed by Chillz.",TextColor3=Color3.new(1,1,1),TextSize=14,TextXAlignment=1,}},
+			{11,"TextLabel",{BackgroundColor3=Color3.new(1,1,1),BackgroundTransparency=1,Font=3,Name="Creator",Parent={2},Position=UDim2.new(1,-110,1,-20),Size=UDim2.new(0,105,0,20),Text="Improved by SeneX.",TextColor3=Color3.new(1,1,1),TextSize=14,TextXAlignment=1,}},
 			{12,"UIGradient",{Parent={11},Transparency=NumberSequence.new({NumberSequenceKeypoint.new(0,1,0),NumberSequenceKeypoint.new(1,1,0),}),}},
 			{13,"TextLabel",{BackgroundColor3=Color3.new(1,1,1),BackgroundTransparency=1,Font=3,Name="Version",Parent={2},Position=UDim2.new(1,-110,1,-35),Size=UDim2.new(0,105,0,20),Text=Main.Version,TextColor3=Color3.new(1,1,1),TextSize=14,TextXAlignment=1,}},
 			{14,"UIGradient",{Parent={13},Transparency=NumberSequence.new({NumberSequenceKeypoint.new(0,1,0),NumberSequenceKeypoint.new(1,1,0),}),}},
@@ -16102,6 +16649,8 @@ end
 
 		Main.CreateApp({Name = "Structure Export", IconMap = Main.LargeIcons, Icon = "Output", Window = StructureExporter.Window})
 
+		Main.CreateApp({Name = "Script Exporter", IconMap = Main.LargeIcons, Icon = "Script_Viewer", Window = ScriptExporter.Window})
+
 		--Main.CreateApp({Name = "Secret Service Panel", IconMap = Main.LargeIcons, Icon = "Output", Window = SecretServicePanel.Window})
 		
 		for _, loadedplugin in pairs(Main.Plugins) do
@@ -16201,7 +16750,7 @@ end
 				intro.SetProgress("Fetching API, Please Wait Due To Huge API File To Download.",0.45)
 			end,
 			function()
-				intro.SetProgress("Fetching API, LOL STILL DOWNlOADING? bad wifi xD",0.475)
+				intro.SetProgress("Fetching API, LOL STILL DOWNlOADING? bad wifi XD",0.475)
 			end
 		)
 		Lib.FastWait()
@@ -16232,6 +16781,7 @@ end
 		ModelViewer.Init()
 		SettingsWindow.Init()
 		StructureExporter.Init()
+		ScriptExporter.Init()
 		--SecretServicePanel.Init()
 		
 		
