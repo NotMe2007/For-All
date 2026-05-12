@@ -1,0 +1,243 @@
+-- Vid enc generated player. Job: {{JOB_ID}}
+
+local BASE_URL = "{{BASE_URL}}"
+local JOB_ID = "{{JOB_ID}}"
+local CACHE_DIR = "vidcache/{{CACHE_DIR}}"
+local FRAME_COUNT = {{FRAME_COUNT}}
+local FPS = {{FPS}}
+local WIDTH = {{WIDTH}}
+local HEIGHT = {{HEIGHT}}
+local AUDIO_DURATION = {{AUDIO_DURATION}}
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local CoreGui = game:GetService("CoreGui")
+local UserInputService = game:GetService("UserInputService")
+local ContentProvider = game:GetService("ContentProvider")
+
+-- getsynasset is the legacy name; some executor forks still expose it instead of getcustomasset.
+local _writefile = writefile
+local _isfile = isfile or function() return false end
+local _getcustomasset = getcustomasset or getsynasset
+local _isfolder = isfolder or function() return false end
+local _makefolder = makefolder or function() end
+
+if not _writefile or not _getcustomasset then
+	error("[Vid enc] Executor must expose writefile + getcustomasset")
+end
+
+if not _isfolder("vidcache") then _makefolder("vidcache") end
+if not _isfolder(CACHE_DIR) then _makefolder(CACHE_DIR) end
+if not _isfolder(CACHE_DIR .. "/frames") then _makefolder(CACHE_DIR .. "/frames") end
+
+local gui = Instance.new("ScreenGui")
+gui.Name = "VidEnc_" .. JOB_ID
+gui.IgnoreGuiInset = true
+gui.ResetOnSpawn = false
+gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+local parentedToCore = pcall(function() gui.Parent = CoreGui end)
+if not parentedToCore then
+	gui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
+end
+
+local frame = Instance.new("Frame")
+frame.AnchorPoint = Vector2.new(0.5, 0.5)
+frame.Size = UDim2.fromOffset(WIDTH * 3, HEIGHT * 3)
+frame.Position = UDim2.fromScale(0.5, 0.5)
+frame.BackgroundColor3 = Color3.new(0, 0, 0)
+frame.BorderSizePixel = 0
+frame.Active = true
+frame.Parent = gui
+
+local stage = Instance.new("Frame")
+stage.Size = UDim2.fromScale(1, 1)
+stage.BackgroundTransparency = 1
+stage.ZIndex = 1
+stage.Parent = frame
+
+local status = Instance.new("TextLabel")
+status.AnchorPoint = Vector2.new(0.5, 1)
+status.Position = UDim2.new(0.5, 0, 1, -6)
+status.Size = UDim2.new(1, -12, 0, 22)
+status.BackgroundColor3 = Color3.new(0, 0, 0)
+status.BackgroundTransparency = 0.4
+status.TextColor3 = Color3.new(1, 1, 1)
+status.Font = Enum.Font.Code
+status.TextSize = 14
+status.Text = "loading..."
+status.ZIndex = 10
+status.Parent = frame
+
+local closeBtn = Instance.new("TextButton")
+closeBtn.AnchorPoint = Vector2.new(1, 0)
+closeBtn.Position = UDim2.new(1, -4, 0, 4)
+closeBtn.Size = UDim2.fromOffset(24, 24)
+closeBtn.BackgroundColor3 = Color3.fromRGB(200, 40, 40)
+closeBtn.Text = "X"
+closeBtn.TextColor3 = Color3.new(1, 1, 1)
+closeBtn.Font = Enum.Font.SourceSansBold
+closeBtn.TextSize = 14
+closeBtn.AutoButtonColor = true
+closeBtn.ZIndex = 10
+closeBtn.Parent = frame
+
+do
+	local dragging, dragStart, startPos
+	frame.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = true
+			dragStart = input.Position
+			startPos = frame.Position
+		end
+	end)
+	frame.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = false
+		end
+	end)
+	UserInputService.InputChanged:Connect(function(input)
+		if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+			local delta = input.Position - dragStart
+			frame.Position = UDim2.new(
+				startPos.X.Scale, startPos.X.Offset + delta.X,
+				startPos.Y.Scale, startPos.Y.Offset + delta.Y
+			)
+		end
+	end)
+end
+
+local function pad(n)
+	return string.format("%05d", n)
+end
+
+local function fetch(url)
+	local lastErr
+	for attempt = 1, 3 do
+		local ok, data = pcall(game.HttpGet, game, url, true)
+		if ok then return data end
+		lastErr = data
+		task.wait(0.5)
+	end
+	error("[Vid enc] fetch failed: " .. tostring(lastErr) .. " (" .. url .. ")")
+end
+
+local cancelled = false
+closeBtn.MouseButton1Click:Connect(function()
+	cancelled = true
+end)
+
+local cachedAll = true
+for i = 1, FRAME_COUNT do
+	if not _isfile(CACHE_DIR .. "/frames/" .. pad(i) .. ".jpg") then
+		cachedAll = false
+		break
+	end
+end
+if not _isfile(CACHE_DIR .. "/audio.ogg") then cachedAll = false end
+
+local downloadedAny = false
+local frameAssets = table.create(FRAME_COUNT)
+
+if cachedAll then
+	status.Text = "loading from cache..."
+	for i = 1, FRAME_COUNT do
+		frameAssets[i] = _getcustomasset(CACHE_DIR .. "/frames/" .. pad(i) .. ".jpg")
+	end
+else
+	for i = 1, FRAME_COUNT do
+		if cancelled then break end
+		local path = CACHE_DIR .. "/frames/" .. pad(i) .. ".jpg"
+		if not _isfile(path) then
+			_writefile(path, fetch(BASE_URL .. "/jobs/" .. JOB_ID .. "/frames/" .. pad(i) .. ".jpg"))
+			downloadedAny = true
+		end
+		frameAssets[i] = _getcustomasset(path)
+		if i == 1 or i % 10 == 0 or i == FRAME_COUNT then
+			status.Text = string.format("frames  %d / %d", i, FRAME_COUNT)
+		end
+	end
+
+	if cancelled then gui:Destroy() return end
+
+	local audioDownloadPath = CACHE_DIR .. "/audio.ogg"
+	if not _isfile(audioDownloadPath) then
+		status.Text = "downloading audio..."
+		_writefile(audioDownloadPath, fetch(BASE_URL .. "/jobs/" .. JOB_ID .. "/audio.ogg"))
+		downloadedAny = true
+	end
+
+	_writefile(CACHE_DIR .. "/complete.txt", tostring(FRAME_COUNT))
+end
+
+if downloadedAny then
+	task.spawn(function()
+		pcall(game.HttpGet, game, BASE_URL .. "/done/" .. JOB_ID)
+	end)
+end
+
+-- Build one persistent ImageLabel per frame, all with their textures loaded up
+-- front. At playback time we only toggle Visible — no Image-property writes, so
+-- nothing can be mid-decode when the frame changes.
+status.Text = "preparing frames..."
+local frameLabels = table.create(FRAME_COUNT)
+for i = 1, FRAME_COUNT do
+	local lbl = Instance.new("ImageLabel")
+	lbl.Size = UDim2.fromScale(1, 1)
+	lbl.BackgroundTransparency = 1
+	lbl.ScaleType = Enum.ScaleType.Stretch
+	lbl.Image = frameAssets[i]
+	lbl.Visible = false
+	lbl.ZIndex = 1
+	lbl.Parent = stage
+	frameLabels[i] = lbl
+	if i % 50 == 0 or i == FRAME_COUNT then
+		status.Text = string.format("preparing  %d / %d", i, FRAME_COUNT)
+		task.wait()
+	end
+end
+
+status.Text = "preloading textures..."
+pcall(function()
+	ContentProvider:PreloadAsync(frameLabels)
+end)
+
+frameLabels[1].Visible = true
+
+local audioPath = CACHE_DIR .. "/audio.ogg"
+local sound = Instance.new("Sound")
+sound.SoundId = _getcustomasset(audioPath)
+sound.Volume = 1
+sound.Looped = false
+sound.Parent = workspace
+
+local conn
+local cleaned = false
+local function cleanup()
+	if cleaned then return end
+	cleaned = true
+	if conn then conn:Disconnect() end
+	if sound then
+		sound:Stop()
+		sound:Destroy()
+	end
+	if gui then gui:Destroy() end
+end
+
+closeBtn.MouseButton1Click:Connect(cleanup)
+sound.Ended:Connect(cleanup)
+
+status.Text = string.format("0.0s / %.1fs", AUDIO_DURATION)
+sound:Play()
+
+local lastIdx = 1
+conn = RunService.RenderStepped:Connect(function()
+	if cleaned then return end
+	local t = sound.TimePosition
+	local idx = math.clamp(math.floor(t * FPS) + 1, 1, FRAME_COUNT)
+	if idx ~= lastIdx then
+		frameLabels[idx].Visible = true
+		frameLabels[lastIdx].Visible = false
+		lastIdx = idx
+	end
+	status.Text = string.format("%.1fs / %.1fs", t, AUDIO_DURATION)
+end)
