@@ -1,26 +1,47 @@
 --[[
 	Dex++
-	Version 3.1
+	Version 3.2.0
 	
 	Improved by SeneX
 	
 	Dex++ is a revival of Moon's Dex, made to fulfill Moon's Dex prophecy.
 	
-	Dex 3.1+ is modded by SeneX added a lot of new features and improvements, and is now called Dex++ Ultra
+	Dex 3.1.0+ is modded by SeneX added a lot of new features and improvements, and is now called Dex++ Ultra
 ]]
 
--- Anti-AFK: simulates right-mouse-button input every 45s to reset the idle timer.
--- VirtualUser is acquired once outside the loop; Button2Down+Up is more reliable than
--- ClickButton2 and uses the actual camera CFrame so the input looks legitimate.
+-- Anti-AFK: fires every 20s — well under any game's idle window.
+-- Combines three input types to beat both Roblox's built-in timer AND custom
+-- idle trackers (e.g. PS99's Idle_Tracking_LocalScript) that listen for
+-- UserInputService.InputChanged (mouse movement) instead of just clicks.
+--   1. VirtualUser:MoveMouse   → fires UIS.InputChanged  (mouse-movement trackers)
+--   2. VirtualUser:Button2Down → fires UIS.InputBegan    (click/button trackers)
+--   3. VirtualUser:Button2Up   → fires UIS.InputEnded    (resets Roblox idle timer)
+
 do
 	local VirtualUser = game:GetService("VirtualUser")
-	local Workspace = game:GetService("Workspace")
+	local Workspace   = game:GetService("Workspace")
 	task.spawn(function()
-		while task.wait(45) do
+		while task.wait(20) do
 			pcall(function()
 				local cam = Workspace.CurrentCamera
 				if not cam then return end
 				local cf = cam.CFrame
+				local vp = cam.ViewportSize
+				local cx = vp.X * 0.5
+				local cy = vp.Y * 0.5
+
+				-- Three small mouse wiggles around the screen centre.
+				-- Each MoveMouse fires UIS.InputChanged, which is what most
+				-- custom idle trackers (including PS99) actually watch for.
+				VirtualUser:MoveMouse(Vector2.new(cx + 2, cy))
+				task.wait(0.04)
+				VirtualUser:MoveMouse(Vector2.new(cx - 2, cy))
+				task.wait(0.04)
+				VirtualUser:MoveMouse(Vector2.new(cx,     cy))
+				task.wait(0.04)
+
+				-- Right-click press + release: resets the Roblox built-in idle timer
+				-- and also fires UIS.InputBegan/Ended for trackers watching button input.
 				VirtualUser:Button2Down(Vector2.new(0, 0), cf)
 				task.wait(0.1)
 				VirtualUser:Button2Up(Vector2.new(0, 0), cf)
@@ -3228,7 +3249,9 @@ return search]==]
 			while true do
 				local processed = false
 				local c = 0
-				for _,node in next,nodes do
+				local nodeSnapshot = {}
+				for _,node in next,nodes do nodeSnapshot[#nodeSnapshot+1] = node end
+				for _,node in ipairs(nodeSnapshot) do
 					if node.HasDel then
 						local delInd
 						for i = 1,#node do
@@ -6777,7 +6800,7 @@ local function main()
 			local absSize = sidesGui.AbsoluteSize
 			local _,bottomInset = game:GetService("GuiService"):GetGuiInset()
 			local maxX = absSize.X
-			local maxY = absSize.Y - math.max(0, bottomInset)
+			local maxY = absSize.Y - math.max(0, bottomInset.Y)
 			posX = math.min(posX,maxX-self.SizeX)
 			posY = math.min(posY,maxY-20)
 			self.GuiElems.Main.Position = UDim2.new(0,posX,0,posY)
@@ -13223,6 +13246,56 @@ local function main()
 		IgnoreDefaultProps = true,
 		IsolateStarterPlayer = true
 	}
+
+	-- Auto-extend DecompileIgnore for PS99 places
+	do
+		local _ps99Games  = {[3317771874]=true}
+		local _ps99Places = {
+			[8737899170]=true,       -- World1
+			[16498369169]=true,      -- World2
+			[17503543197]=true,      -- World3
+			[140403681187145]=true,  -- World4
+			[15502339080]=true,      -- Trading
+			[15588442388]=true,      -- ProTrading
+			[13764885284]=true,      -- Holding
+			[95635359880599]=true,   -- FishingEvent
+			[119454325063278]=true,  -- FarmingWorld
+			[99703032952567]=true,   -- TowerDefenseLobby
+			[131952481663528]=true,  -- HalloweenWorld
+			[90139951126997]=true,   -- Merchandise
+		}
+		if _ps99Games[game.GameId] or _ps99Places[game.PlaceId] then
+			local ps99Ignore = {"StarterPlayer", "Workspace", "ReplicatedFirst"}
+			for _, name in ipairs(ps99Ignore) do
+				table.insert(SaveInstanceArgs.DecompileIgnore, name)
+			end
+		end
+	end
+
+	-- Auto-extend DecompileIgnore for FAF (Farm A Fish) places
+	do
+		local _fafPlaces = {
+			[91296119701853]=true,  -- Farm A Fish (main)
+			[2427396787]=true,      -- Farm A Fish (dev/alt)
+		}
+		if _fafPlaces[game.PlaceId] then
+			local fafIgnore = {
+				"StarterPlayer",  -- PlayerModule (camera/control), PlayerScriptsLoader, RbxCharacterSounds, all TS/ scripts
+				"Workspace",      -- Animate LocalScripts (default character animations)
+				"TestService",    -- LuauLSP_Settings (dev-only)
+				"Packages",       -- roblox-ts packages (Promise, Reflex, Signal, Ripple, Trove, Symbol + _Index/)
+				"rbxts_include",  -- node_modules (@flamework, @rbxts)
+				"Modules",        -- ragdoll, sounds, colors, tweens, sword mechanics, UI helpers
+				"CmdrInterface",  -- admin UI framework internals
+				"DefaultEventHandlers", -- cmdr admin framework
+				"Shared",         -- cmdr shared internals
+				"Types",          -- cmdr type definitions
+			}
+			for _, name in ipairs(fafIgnore) do
+				table.insert(SaveInstanceArgs.DecompileIgnore, name)
+			end
+		end
+	end
 	
 	local function AddCheckbox(title, default)
 		local frame = Lib.Frame.new()
@@ -14261,6 +14334,112 @@ local function main()
 		MaxRetries       = 5,        -- retry passes for failed scripts
 		OutputBaseFolder = "dex/scripts",
 	}
+
+	-- Auto-extend IgnoreList for PS99 places.
+	-- isIgnored() walks the ancestor chain, so container names catch everything inside.
+	do
+		local _ps99Games  = {[3317771874]=true}
+		local _ps99Places = {
+			[8737899170]=true,       -- World1
+			[16498369169]=true,      -- World2
+			[17503543197]=true,      -- World3
+			[140403681187145]=true,  -- World4
+			[15502339080]=true,      -- Trading
+			[15588442388]=true,      -- ProTrading
+			[13764885284]=true,      -- Holding
+			[95635359880599]=true,   -- FishingEvent
+			[119454325063278]=true,  -- FarmingWorld
+			[99703032952567]=true,   -- TowerDefenseLobby
+			[131952481663528]=true,  -- HalloweenWorld
+			[90139951126997]=true,   -- Merchandise
+		}
+		if _ps99Games[game.GameId] or _ps99Places[game.PlaceId] then
+			local ps99Ignore = {
+				-- Whole service containers (catches everything inside via ancestor walk)
+				"StarterPlayer",   -- camera, control, character anims, all VFX/animation/GUI/test scripts
+				"Workspace",       -- Animate, Swimming, lava/water textures, NPC animation scripts
+				"ReplicatedFirst", -- Intro, Blunder, ForceInstance scripts
+				-- ReplicatedStorage sub-containers (RS.Library.Client.*)
+				"GUIFX",           -- 35+ UI animation library modules (Shimmer, Bounce, Confetti, etc.)
+				"UI_ActionMenu",   -- 200+ action menu item-display modules (flag/boat/cape/food/key/potion)
+				"UI_ItemUI",       -- item display modules (Booth, Box, Card, Catch, etc.)
+			}
+			for _, name in ipairs(ps99Ignore) do
+				table.insert(opts.IgnoreList, name)
+			end
+		end
+	end
+
+	-- Auto-extend IgnoreList for FAF (Farm A Fish) places.
+	-- isIgnored() ancestor-walks, so container names cover everything nested inside.
+	do
+		local _fafPlaces = {
+			[91296119701853]=true,  -- Farm A Fish (main)
+			[2427396787]=true,      -- Farm A Fish (dev/alt)
+		}
+		if _fafPlaces[game.PlaceId] then
+			local fafIgnore = {
+				-- Roblox default boilerplate (StarterPlayer tree)
+				"PlayerModule",         -- CameraModule + ControlModule (default Roblox systems)
+				"PlayerScriptsLoader",  -- default Roblox loader script
+				"RbxCharacterSounds",   -- default character sound scripts
+				-- Visual/audio-only TS system sub-folders
+				"camera",               -- camera sub-system
+				"cosmetics",            -- interactiveCosmeticsSystem, launchPads
+				"onboarding",           -- firstAutoFeederGuidance, firstEggGuidance, tutorial
+				"weather",              -- all weather visual systems
+				"weather-setup",        -- disco, pirateInvasion
+				"ui",                   -- all client-side UI rendering components
+				-- ReplicatedStorage framework/library containers
+				"Packages",             -- Promise, Reflex, Signal, Ripple, Trove, Symbol + _Index/
+				"rbxts_include",        -- node_modules (@flamework, @rbxts)
+				"Modules",              -- ragdoll, sounds, colors, tweens, sword mechanics, UI helpers
+				"CmdrInterface",        -- admin UI framework
+				"DefaultEventHandlers", -- cmdr admin
+				"Shared",               -- cmdr shared internals
+				"Types",                -- cmdr type defs
+				-- TestService
+				"TestService",          -- LuauLSP_Settings (dev-only)
+				-- Trivial RS.TS entries
+				"spring",               -- spring animation math (quaternion_ModuleScript)
+				-- Individual visual-only system scripts (matched by Name via ancestor walk)
+				"cameraShake",
+				"createCamera",
+				"fieldOfView",
+				"autoFeederEffects",
+				"foodTrayVisuals",
+				"netsBubblesEffect",
+				"netsCatchEffect",
+				"netsJumpingFishSystem",
+				"netsShakeEffect",
+				"playFishAttackAnimation",
+				"renderFishMutations",
+				"subpondWalkParticles",
+				"eggAnimations",
+				"eggHatchTimerBillboard",
+				"petEffects",
+				"petShadowOrbVisual",
+				"scalePetModelsByAge",
+				"glowSystem",
+				"hideFoamOnLowAngle",
+				"hideHiddenModels",
+				"spinModels",
+				"setupSpinHoverTags",
+				"highlightModels",
+				"resolveHighlights",
+				"highlightCleanup",
+				"animateWaterTexture",
+				"eggIncubatorsSpin",
+				"playMusic",
+				"setupAudio",
+				"debugZonesShowBounds",
+				"npcLookAtPlayer",
+			}
+			for _, name in ipairs(fafIgnore) do
+				table.insert(opts.IgnoreList, name)
+			end
+		end
+	end
 
 	-- ── UI helpers (identical pattern to StructureExporter) ─────────────
 	local function AddCheckbox(title, default)
