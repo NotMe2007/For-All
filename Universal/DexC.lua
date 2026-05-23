@@ -14515,11 +14515,13 @@ local function main()
 	-- Create every folder level under basePath for the given path parts.
 	local function ensureFolders(basePath, parts)
 		local path = basePath
-		env.makefolder(path)
+		pcall(env.makefolder, path)
 		-- parts[#parts] is the script itself – only make folders for ancestors
 		for i = 1, #parts - 1 do
-			path = path .. "/" .. parts[i]
-			env.makefolder(path)
+			if parts[i] and parts[i] ~= "" then
+				path = path .. "/" .. parts[i]
+				pcall(env.makefolder, path)
+			end
 		end
 	end
 
@@ -14580,12 +14582,10 @@ local function main()
 		end
 
 		-- Build output base: dex/scripts/GameName_PlaceId
-		local gameName = env.parsefile(
-			pcall(function()
-				return game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name
-			end) and game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name
-			or tostring(game.PlaceId)
-		)
+		local _mok, _mname = pcall(function()
+			return game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name
+		end)
+		local gameName = env.parsefile(_mok and _mname or tostring(game.PlaceId))
 		local exportBase = opts.OutputBaseFolder .. "/" .. gameName .. "_" .. tostring(game.PlaceId)
 		env.makefolder(opts.OutputBaseFolder)
 		env.makefolder(exportBase)
@@ -15825,7 +15825,8 @@ if gethsfuncs then
 		end)()
 		
 		env.parsefile = function(name)
-			return tostring(name):gsub("[*\\?:<>|]+", ""):sub(1, 175)
+			local s = tostring(name):gsub('[*\\?:<>|"/]+', ""):sub(1, 175)
+			return s ~= "" and s or "_"
 		end
 
 		-- debug
