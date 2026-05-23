@@ -15870,97 +15870,75 @@ if gethsfuncs then
 		end
 		
 		
-		-- DECOMPILERS
-		
-		local AdvancedDecompilerCache
-		pcall(function()
-			AdvancedDecompilerCache = (load or loadstring)(game:HttpGet("https://raw.githubusercontent.com/"..Main.GitName.."/Advanced-Decompiler-V3/refs/heads/main/init.lua"))()
-		end)
-		
-		local konstant_last_call = 0
-		
-		local function KonstantDec(...)
-			-- by lovrewe
-			--warn("No built-in decompiler exists, using Konstant decompiler...")
-			--assert(getscriptbytecode, "Exploit not supported.")
-			local API = "http://api.plusgiant5.com"
+        -- DECOMPILERS
 
-			local request = env.request
+		local luaexpert_last_call = 0
 
-			local function call(konstantType, scriptPath)
-				local success, bytecode = pcall(env.getscriptbytecode, scriptPath)
+		local function LuaExpertDec(script_instance)
+			local success, bytecode = pcall(env.getscriptbytecode, script_instance)
 
-				if (not success) then
-					return `-- Failed to get script bytecode, error:\n\n--[[\n{bytecode}\n--]]`
+			if (not success) then
+				return "-- Failed to get script bytecode, error:\n\n--[[\n" .. tostring(bytecode) .. "\n--]]"
+			end
+
+			local time_elapsed = os.clock() - luaexpert_last_call
+			if time_elapsed <= 0.6 then
+				task.wait(0.6 - time_elapsed)
+			end
+
+			local encoder = base64_encode or (crypt and crypt.base64encode) or (crypt and crypt.base64 and crypt.base64.encode)
+			if not encoder then
+				encoder = function(data)
+					local b = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+					return ((data:gsub('.', function(x)
+						local r,byte = '',x:byte()
+						for i=8,1,-1 do r = r .. (byte % 2^i - byte % 2^(i-1) > 0 and '1' or '0') end
+						return r
+					end)..'0000'):gsub('%d%d%d?%d?%d?%d?', function(x)
+						if #x < 6 then return '' end
+						local c = 0
+						for i=1,6 do c = c + (x:sub(i,i) == '1' and 2^(6-i) or 0) end
+						return b:sub(c+1,c+1)
+					end)..({ '', '==', '=' })[#data % 3 + 1])
 				end
+			end
 
-				local time_elapsed = os.clock() - konstant_last_call
-				if time_elapsed <= .5 then
-					task.wait(.5 - time_elapsed)
-				end
+			local HttpService = game:GetService("HttpService")
+			local req = env.request or (syn and syn.request) or (http and http.request) or http_request or request
 
-				local httpResult = env.request({
-					Url = API .. konstantType,
-					Body = bytecode,
-					Method = "POST",
-					Headers = {
-						["Content-Type"] = "text/plain"
-					}
+			local httpResult = req({
+				Url = "https://api.lua.expert/decompile",
+				Method = "POST",
+				Headers = {
+					["Content-Type"] = "application/json"
+				},
+				Body = HttpService:JSONEncode({
+					script = encoder(bytecode)
 				})
+			})
 
-				konstant_last_call = os.clock()
+			luaexpert_last_call = os.clock()
 
-				if (httpResult.StatusCode ~= 200) then
-					return `-- Error occurred while requesting Konstant API, error:\n\n--[[\n{httpResult.Body}\n--]]`
-				else
-					return httpResult.Body
-				end
+			if (not httpResult or httpResult.StatusCode ~= 200) then
+				return "-- Error occurred while requesting lua.expert API, error:\n\n--[[\n" .. tostring(httpResult and httpResult.Body or "No response") .. "\n--]]"
+			else
+				return httpResult.Body
 			end
-
-			local function konstantDecompile(scriptPath)
-				return call("/konstant/decompile", scriptPath)
-			end
-
-			return konstantDecompile(...)
 		end
-		local ADDec = AdvancedDecompilerCache or function() return "Failed to load Advanced Decompiler" end
 
-		local function ShinyDec(script_instance)
-			if typeof(crypt) ~= "table" then return "-- 'crypt' library is missing!" end
-			local success, result = pcall(function()
-				return game:HttpGet("http://127.0.0.1:"..tostring(Settings.Decompiler.ShinyDecompilerPort))
-			end)
-			if not success then return "-- Shiny decompiler is not active or port is wrong!" end
-
-			local bytecode = getscriptbytecode(script_instance)
-			local encoded = crypt.base64encode(bytecode)
-			return env.request(
-				{
-					Url = "http://127.0.0.1:"..tostring(Settings.Decompiler.ShinyDecompilerPort).."/luau/decompile",
-					Method = "POST",
-					Body = encoded
-				}
-			).Body
-		end
+		-- Hook it directly into Dex
 		env.decompile = function(...)
-			if typeof(decompile) == "function" and Settings.Decompiler.PreferDecompilerFallback == false then
-				return decompile(...)
-			elseif typeof(getscriptbytecode) == "function" then
-				local fallbackMode = Settings.Decompiler.DecompilerFallback
-				
-				if fallbackMode == "Konstant" then
-					return KonstantDec(...)
-				elseif fallbackMode == "AdvancedDecompiler" then
-					return ADDec(...)
-				elseif  fallbackMode == "Shiny" then
-					return ShinyDec(...)
-				end
+			if typeof(getscriptbytecode) == "function" then
+				-- Forced to only use lua.expert API
+				return LuaExpertDec(...)
+			else
+			    return "-- getscriptbytecode is not supported by your executor. Cannot decompile."
 			end
 		end
-		
-		--[[if Main.Elevated then
+
+		if Main.Elevated then
 			getgenv().decompile = env.decompile
-		end]]
+		end
 		
 
 		if identifyexecutor then
