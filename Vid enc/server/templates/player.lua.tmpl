@@ -1,4 +1,15 @@
--- Vid enc generated player. Job: {{JOB_ID}}
+-- Vid enc player module. Job: {{JOB_ID}}
+--
+-- loadstring(game:HttpGet(playback_url))() RETURNS a VidPlayer object.
+-- It does NOT auto-run, so your main script stays in control:
+--
+--   local player = loadstring(game:HttpGet(url))()
+--   player.Config.Scale = 4
+--   player.Config.Position = UDim2.fromScale(0.2, 0.3)
+--   player.OnFrame = function(i) print("frame", i) end
+--   player:Run()            -- builds GUI, downloads, plays
+--   ...
+--   player:Pause()  player:Play()  player:Seek(30)  player:Stop()  player:Destroy()
 
 local BASE_URL = "{{BASE_URL}}"
 local JOB_ID = "{{JOB_ID}}"
@@ -8,6 +19,7 @@ local FPS = {{FPS}}
 local WIDTH = {{WIDTH}}
 local HEIGHT = {{HEIGHT}}
 local AUDIO_DURATION = {{AUDIO_DURATION}}
+local TITLE = "{{TITLE}}"
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -15,7 +27,7 @@ local CoreGui = game:GetService("CoreGui")
 local UserInputService = game:GetService("UserInputService")
 local ContentProvider = game:GetService("ContentProvider")
 
--- getsynasset is the legacy name; some executor forks still expose it instead of getcustomasset.
+-- getsynasset is the legacy name some executor forks still use.
 local _writefile = writefile
 local _isfile = isfile or function() return false end
 local _getcustomasset = getcustomasset or getsynasset
@@ -26,88 +38,22 @@ if not _writefile or not _getcustomasset then
 	error("[Vid enc] Executor must expose writefile + getcustomasset")
 end
 
-if not _isfolder("vidcache") then _makefolder("vidcache") end
-if not _isfolder(CACHE_DIR) then _makefolder(CACHE_DIR) end
-if not _isfolder(CACHE_DIR .. "/frames") then _makefolder(CACHE_DIR .. "/frames") end
-
-local gui = Instance.new("ScreenGui")
-gui.Name = "VidEnc_" .. JOB_ID
-gui.IgnoreGuiInset = true
-gui.ResetOnSpawn = false
-gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-local parentedToCore = pcall(function() gui.Parent = CoreGui end)
-if not parentedToCore then
-	gui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
-end
-
-local frame = Instance.new("Frame")
-frame.AnchorPoint = Vector2.new(0.5, 0.5)
-frame.Size = UDim2.fromOffset(WIDTH * 3, HEIGHT * 3)
-frame.Position = UDim2.fromScale(0.5, 0.5)
-frame.BackgroundColor3 = Color3.new(0, 0, 0)
-frame.BorderSizePixel = 0
-frame.Active = true
-frame.Parent = gui
-
-local stage = Instance.new("Frame")
-stage.Size = UDim2.fromScale(1, 1)
-stage.BackgroundTransparency = 1
-stage.ZIndex = 1
-stage.Parent = frame
-
-local status = Instance.new("TextLabel")
-status.AnchorPoint = Vector2.new(0.5, 1)
-status.Position = UDim2.new(0.5, 0, 1, -6)
-status.Size = UDim2.new(1, -12, 0, 22)
-status.BackgroundColor3 = Color3.new(0, 0, 0)
-status.BackgroundTransparency = 0.4
-status.TextColor3 = Color3.new(1, 1, 1)
-status.Font = Enum.Font.Code
-status.TextSize = 14
-status.Text = "loading..."
-status.ZIndex = 10
-status.Parent = frame
-
-local closeBtn = Instance.new("TextButton")
-closeBtn.AnchorPoint = Vector2.new(1, 0)
-closeBtn.Position = UDim2.new(1, -4, 0, 4)
-closeBtn.Size = UDim2.fromOffset(24, 24)
-closeBtn.BackgroundColor3 = Color3.fromRGB(200, 40, 40)
-closeBtn.Text = "X"
-closeBtn.TextColor3 = Color3.new(1, 1, 1)
-closeBtn.Font = Enum.Font.SourceSansBold
-closeBtn.TextSize = 14
-closeBtn.AutoButtonColor = true
-closeBtn.ZIndex = 10
-closeBtn.Parent = frame
-
-do
-	local dragging, dragStart, startPos
-	frame.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-			dragging = true
-			dragStart = input.Position
-			startPos = frame.Position
-		end
-	end)
-	frame.InputEnded:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-			dragging = false
-		end
-	end)
-	UserInputService.InputChanged:Connect(function(input)
-		if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-			local delta = input.Position - dragStart
-			frame.Position = UDim2.new(
-				startPos.X.Scale, startPos.X.Offset + delta.X,
-				startPos.Y.Scale, startPos.Y.Offset + delta.Y
-			)
-		end
-	end)
-end
-
 local function pad(n)
 	return string.format("%05d", n)
+end
+local function framePath(i)
+	return CACHE_DIR .. "/frames/" .. pad(i) .. ".jpg"
+end
+local function frameUrl(i)
+	return BASE_URL .. "/jobs/" .. JOB_ID .. "/frames/" .. pad(i) .. ".jpg"
+end
+local AUDIO_PATH = CACHE_DIR .. "/audio.ogg"
+local AUDIO_URL = BASE_URL .. "/jobs/" .. JOB_ID .. "/audio.ogg"
+
+local function ensureFolders()
+	if not _isfolder("vidcache") then _makefolder("vidcache") end
+	if not _isfolder(CACHE_DIR) then _makefolder(CACHE_DIR) end
+	if not _isfolder(CACHE_DIR .. "/frames") then _makefolder(CACHE_DIR .. "/frames") end
 end
 
 local function fetch(url)
@@ -121,123 +67,515 @@ local function fetch(url)
 	error("[Vid enc] fetch failed: " .. tostring(lastErr) .. " (" .. url .. ")")
 end
 
-local cancelled = false
-closeBtn.MouseButton1Click:Connect(function()
-	cancelled = true
-end)
+local function fmtTime(t)
+	t = math.max(0, math.floor(t))
+	return string.format("%d:%02d", math.floor(t / 60), t % 60)
+end
 
-local cachedAll = true
-for i = 1, FRAME_COUNT do
-	if not _isfile(CACHE_DIR .. "/frames/" .. pad(i) .. ".jpg") then
-		cachedAll = false
-		break
+--==================================================================
+-- VidPlayer
+--==================================================================
+local VidPlayer = {}
+VidPlayer.__index = VidPlayer
+
+function VidPlayer.new()
+	local self = setmetatable({}, VidPlayer)
+
+	-- Read-only info about this video.
+	self.Info = {
+		JobId = JOB_ID,
+		Title = TITLE,
+		FrameCount = FRAME_COUNT,
+		Fps = FPS,
+		Duration = AUDIO_DURATION,
+		Width = WIDTH,
+		Height = HEIGHT,
+		CacheDir = CACHE_DIR,
+	}
+
+	-- Edit these BEFORE calling :Run() / :Play() to change look & behaviour.
+	self.Config = {
+		Parent = nil,                            -- explicit ScreenGui parent (overrides ParentToCoreGui)
+		ParentToCoreGui = true,                  -- try CoreGui first, fall back to PlayerGui
+		Scale = 3,                               -- each frame drawn at WIDTH*Scale x HEIGHT*Scale
+		Position = UDim2.fromScale(0.5, 0.5),
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Volume = 1,
+		Looped = false,
+		AutoPlay = true,                         -- :Run() starts playback when true
+		ShowControls = true,                     -- bottom bar: play/pause, stop, seek, time
+		Draggable = true,                        -- drag the video area to move the window
+	}
+
+	-- Assign callbacks (all optional).
+	self.OnProgress = nil       -- function(done, total, phase)  phase = "download" | "cache" | "prepare"
+	self.OnLoaded = nil         -- function()
+	self.OnFrame = nil          -- function(index)
+	self.OnEnded = nil          -- function()
+	self.OnStateChanged = nil   -- function(state)  "playing" | "paused" | "stopped" | "destroyed"
+
+	-- Runtime (read if you like, but prefer methods).
+	self.State = "idle"
+	self.Loaded = false
+	self.Instances = {}         -- Gui, Window, Stage, Status, ControlBar, PlayButton, SeekBar, SeekFill, TimeLabel, CloseButton
+
+	self._frames = nil
+	self._labels = nil
+	self._sound = nil
+	self._conn = nil
+	self._lastIdx = 0
+	self._destroyed = false
+	return self
+end
+
+function VidPlayer:_setState(state)
+	self.State = state
+	if self.OnStateChanged then
+		pcall(self.OnStateChanged, state)
 	end
 end
-if not _isfile(CACHE_DIR .. "/audio.ogg") then cachedAll = false end
 
-local downloadedAny = false
-local frameAssets = table.create(FRAME_COUNT)
-
-if cachedAll then
-	status.Text = "loading from cache..."
-	for i = 1, FRAME_COUNT do
-		frameAssets[i] = _getcustomasset(CACHE_DIR .. "/frames/" .. pad(i) .. ".jpg")
+function VidPlayer:_setStatus(text)
+	if self.Instances.Status then
+		self.Instances.Status.Text = text
+		self.Instances.Status.Visible = text ~= nil and text ~= ""
 	end
-else
+end
+
+function VidPlayer:_reportProgress(done, total, phase)
+	if self.OnProgress then
+		pcall(self.OnProgress, done, total, phase)
+	else
+		self:_setStatus(string.format("%s %d / %d", phase, done, total))
+	end
+end
+
+-- True only if every frame + the audio is already on disk.
+function VidPlayer:IsCached()
+	if not _isfile(AUDIO_PATH) then return false end
 	for i = 1, FRAME_COUNT do
-		if cancelled then break end
-		local path = CACHE_DIR .. "/frames/" .. pad(i) .. ".jpg"
-		if not _isfile(path) then
-			_writefile(path, fetch(BASE_URL .. "/jobs/" .. JOB_ID .. "/frames/" .. pad(i) .. ".jpg"))
+		if not _isfile(framePath(i)) then return false end
+	end
+	return true
+end
+
+-- Download (or load from cache) all frames + audio. Yields. Safe to call twice.
+function VidPlayer:Load()
+	if self.Loaded then return self end
+	ensureFolders()
+
+	local cached = self:IsCached()
+	local frames = table.create(FRAME_COUNT)
+	local downloadedAny = false
+
+	if cached then
+		for i = 1, FRAME_COUNT do
+			frames[i] = _getcustomasset(framePath(i))
+			if i % 25 == 0 or i == FRAME_COUNT then
+				self:_reportProgress(i, FRAME_COUNT, "cache")
+			end
+		end
+	else
+		for i = 1, FRAME_COUNT do
+			if self._destroyed then return self end
+			local p = framePath(i)
+			if not _isfile(p) then
+				_writefile(p, fetch(frameUrl(i)))
+				downloadedAny = true
+			end
+			frames[i] = _getcustomasset(p)
+			if i == 1 or i % 5 == 0 or i == FRAME_COUNT then
+				self:_reportProgress(i, FRAME_COUNT, "download")
+			end
+		end
+		if not _isfile(AUDIO_PATH) then
+			self:_setStatus("downloading audio...")
+			_writefile(AUDIO_PATH, fetch(AUDIO_URL))
 			downloadedAny = true
 		end
-		frameAssets[i] = _getcustomasset(path)
-		if i == 1 or i % 10 == 0 or i == FRAME_COUNT then
-			status.Text = string.format("frames  %d / %d", i, FRAME_COUNT)
-		end
+		_writefile(CACHE_DIR .. "/complete.txt", tostring(FRAME_COUNT))
 	end
 
-	if cancelled then gui:Destroy() return end
+	self._frames = frames
 
-	local audioDownloadPath = CACHE_DIR .. "/audio.ogg"
-	if not _isfile(audioDownloadPath) then
-		status.Text = "downloading audio..."
-		_writefile(audioDownloadPath, fetch(BASE_URL .. "/jobs/" .. JOB_ID .. "/audio.ogg"))
-		downloadedAny = true
+	-- Tell the server it can delete this job's files now that we have them.
+	if downloadedAny then
+		task.spawn(function()
+			pcall(game.HttpGet, game, BASE_URL .. "/done/" .. JOB_ID)
+		end)
 	end
 
-	_writefile(CACHE_DIR .. "/complete.txt", tostring(FRAME_COUNT))
+	self.Loaded = true
+	if self.OnLoaded then pcall(self.OnLoaded) end
+	return self
 end
 
-if downloadedAny then
-	task.spawn(function()
-		pcall(game.HttpGet, game, BASE_URL .. "/done/" .. JOB_ID)
+function VidPlayer:_ensureGui()
+	if self.Instances.Gui then return end
+
+	local gui = Instance.new("ScreenGui")
+	gui.Name = "VidEnc_" .. JOB_ID
+	gui.IgnoreGuiInset = true
+	gui.ResetOnSpawn = false
+	gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+	local parent = self.Config.Parent
+	if not parent then
+		if self.Config.ParentToCoreGui and pcall(function() gui.Parent = CoreGui end) then
+			parent = nil
+		else
+			parent = Players.LocalPlayer:WaitForChild("PlayerGui")
+		end
+	end
+	if parent then gui.Parent = parent end
+
+	local barH = self.Config.ShowControls and 28 or 0
+
+	local window = Instance.new("Frame")
+	window.AnchorPoint = self.Config.AnchorPoint
+	window.Position = self.Config.Position
+	window.Size = UDim2.fromOffset(WIDTH * self.Config.Scale, HEIGHT * self.Config.Scale + barH)
+	window.BackgroundColor3 = Color3.new(0, 0, 0)
+	window.BorderSizePixel = 0
+	window.Active = true
+	window.Parent = gui
+
+	local stage = Instance.new("Frame")
+	stage.Size = UDim2.new(1, 0, 1, -barH)
+	stage.BackgroundColor3 = Color3.new(0, 0, 0)
+	stage.BorderSizePixel = 0
+	stage.ClipsDescendants = true
+	stage.Parent = window
+
+	local status = Instance.new("TextLabel")
+	status.AnchorPoint = Vector2.new(0.5, 0.5)
+	status.Position = UDim2.fromScale(0.5, 0.5)
+	status.Size = UDim2.new(1, -16, 0, 22)
+	status.BackgroundTransparency = 1
+	status.TextColor3 = Color3.new(1, 1, 1)
+	status.Font = Enum.Font.Code
+	status.TextSize = 14
+	status.Text = "loading..."
+	status.ZIndex = 5
+	status.Parent = stage
+
+	local closeBtn = Instance.new("TextButton")
+	closeBtn.AnchorPoint = Vector2.new(1, 0)
+	closeBtn.Position = UDim2.new(1, -4, 0, 4)
+	closeBtn.Size = UDim2.fromOffset(22, 22)
+	closeBtn.BackgroundColor3 = Color3.fromRGB(200, 40, 40)
+	closeBtn.Text = "X"
+	closeBtn.TextColor3 = Color3.new(1, 1, 1)
+	closeBtn.Font = Enum.Font.SourceSansBold
+	closeBtn.TextSize = 14
+	closeBtn.ZIndex = 6
+	closeBtn.Parent = stage
+	closeBtn.MouseButton1Click:Connect(function()
+		self:Destroy()
+	end)
+
+	self.Instances.Gui = gui
+	self.Instances.Window = window
+	self.Instances.Stage = stage
+	self.Instances.Status = status
+	self.Instances.CloseButton = closeBtn
+
+	if self.Config.ShowControls then self:_buildControls(window, barH) end
+	if self.Config.Draggable then self:_makeDraggable(window, stage) end
+end
+
+function VidPlayer:_buildControls(window, barH)
+	local bar = Instance.new("Frame")
+	bar.AnchorPoint = Vector2.new(0, 1)
+	bar.Position = UDim2.fromScale(0, 1)
+	bar.Size = UDim2.new(1, 0, 0, barH)
+	bar.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+	bar.BorderSizePixel = 0
+	bar.Parent = window
+
+	local playBtn = Instance.new("TextButton")
+	playBtn.Position = UDim2.fromOffset(0, 0)
+	playBtn.Size = UDim2.new(0, 46, 1, 0)
+	playBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+	playBtn.BorderSizePixel = 0
+	playBtn.Text = "Play"
+	playBtn.TextColor3 = Color3.new(1, 1, 1)
+	playBtn.Font = Enum.Font.SourceSansBold
+	playBtn.TextSize = 14
+	playBtn.Parent = bar
+	playBtn.MouseButton1Click:Connect(function()
+		self:TogglePause()
+	end)
+
+	local stopBtn = Instance.new("TextButton")
+	stopBtn.Position = UDim2.fromOffset(46, 0)
+	stopBtn.Size = UDim2.new(0, 46, 1, 0)
+	stopBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+	stopBtn.BorderSizePixel = 0
+	stopBtn.Text = "Stop"
+	stopBtn.TextColor3 = Color3.new(1, 1, 1)
+	stopBtn.Font = Enum.Font.SourceSansBold
+	stopBtn.TextSize = 14
+	stopBtn.Parent = bar
+	stopBtn.MouseButton1Click:Connect(function()
+		self:Stop()
+	end)
+
+	local seekBar = Instance.new("TextButton")
+	seekBar.Position = UDim2.fromOffset(98, 8)
+	seekBar.Size = UDim2.new(1, -98 - 96, 0, barH - 16)
+	seekBar.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+	seekBar.BorderSizePixel = 0
+	seekBar.Text = ""
+	seekBar.AutoButtonColor = false
+	seekBar.Parent = bar
+
+	local seekFill = Instance.new("Frame")
+	seekFill.Size = UDim2.new(0, 0, 1, 0)
+	seekFill.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+	seekFill.BorderSizePixel = 0
+	seekFill.Parent = seekBar
+
+	local timeLabel = Instance.new("TextLabel")
+	timeLabel.AnchorPoint = Vector2.new(1, 0)
+	timeLabel.Position = UDim2.new(1, -4, 0, 0)
+	timeLabel.Size = UDim2.new(0, 88, 1, 0)
+	timeLabel.BackgroundTransparency = 1
+	timeLabel.Text = "0:00 / " .. fmtTime(AUDIO_DURATION)
+	timeLabel.TextColor3 = Color3.new(1, 1, 1)
+	timeLabel.Font = Enum.Font.Code
+	timeLabel.TextSize = 13
+	timeLabel.TextXAlignment = Enum.TextXAlignment.Right
+	timeLabel.Parent = bar
+
+	local function seekFromX(absX)
+		local origin = seekBar.AbsolutePosition.X
+		local width = seekBar.AbsoluteSize.X
+		if width <= 0 then return end
+		local frac = math.clamp((absX - origin) / width, 0, 1)
+		self:Seek(frac * AUDIO_DURATION)
+	end
+
+	local seeking = false
+	seekBar.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			seeking = true
+			seekFromX(input.Position.X)
+		end
+	end)
+	seekBar.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			seeking = false
+		end
+	end)
+	UserInputService.InputChanged:Connect(function(input)
+		if seeking and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+			seekFromX(input.Position.X)
+		end
+	end)
+
+	self.Instances.ControlBar = bar
+	self.Instances.PlayButton = playBtn
+	self.Instances.StopButton = stopBtn
+	self.Instances.SeekBar = seekBar
+	self.Instances.SeekFill = seekFill
+	self.Instances.TimeLabel = timeLabel
+end
+
+function VidPlayer:_makeDraggable(window, handle)
+	local dragging, dragStart, startPos
+	handle.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = true
+			dragStart = input.Position
+			startPos = window.Position
+		end
+	end)
+	handle.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = false
+		end
+	end)
+	UserInputService.InputChanged:Connect(function(input)
+		if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+			local delta = input.Position - dragStart
+			window.Position = UDim2.new(
+				startPos.X.Scale, startPos.X.Offset + delta.X,
+				startPos.Y.Scale, startPos.Y.Offset + delta.Y
+			)
+		end
 	end)
 end
 
--- Build one persistent ImageLabel per frame, all with their textures loaded up
--- front. At playback time we only toggle Visible — no Image-property writes, so
--- nothing can be mid-decode when the frame changes.
-status.Text = "preparing frames..."
-local frameLabels = table.create(FRAME_COUNT)
-for i = 1, FRAME_COUNT do
-	local lbl = Instance.new("ImageLabel")
-	lbl.Size = UDim2.fromScale(1, 1)
-	lbl.BackgroundTransparency = 1
-	lbl.ScaleType = Enum.ScaleType.Stretch
-	lbl.Image = frameAssets[i]
-	lbl.Visible = false
-	lbl.ZIndex = 1
-	lbl.Parent = stage
-	frameLabels[i] = lbl
-	if i % 50 == 0 or i == FRAME_COUNT then
-		status.Text = string.format("preparing  %d / %d", i, FRAME_COUNT)
-		task.wait()
+-- Build one ImageLabel per frame, textures preloaded. Playback only toggles
+-- Visible, so a frame is never mid-decode when shown (no black flicker).
+function VidPlayer:_ensureLabels()
+	if self._labels then return end
+	if not self._frames then
+		error("[Vid enc] call :Load() before showing frames")
+	end
+	self:_ensureGui()
+
+	local labels = table.create(FRAME_COUNT)
+	for i = 1, FRAME_COUNT do
+		local lbl = Instance.new("ImageLabel")
+		lbl.Size = UDim2.fromScale(1, 1)
+		lbl.BackgroundTransparency = 1
+		lbl.ScaleType = Enum.ScaleType.Stretch
+		lbl.Image = self._frames[i]
+		lbl.Visible = false
+		lbl.ZIndex = 2
+		lbl.Parent = self.Instances.Stage
+		labels[i] = lbl
+		if i % 50 == 0 or i == FRAME_COUNT then
+			self:_reportProgress(i, FRAME_COUNT, "prepare")
+			task.wait()
+		end
+	end
+
+	pcall(function()
+		ContentProvider:PreloadAsync(labels)
+	end)
+
+	labels[1].Visible = true
+	self._lastIdx = 1
+	self._labels = labels
+	self:_setStatus(nil)
+end
+
+function VidPlayer:_ensureSound()
+	if self._sound then return end
+	local sound = Instance.new("Sound")
+	sound.SoundId = _getcustomasset(AUDIO_PATH)
+	sound.Volume = self.Config.Volume
+	sound.Looped = self.Config.Looped
+	sound.Parent = workspace
+	sound.Ended:Connect(function()
+		if self.OnEnded then pcall(self.OnEnded) end
+		self:_setState("stopped")
+		self:_updatePlayButton()
+	end)
+	self._sound = sound
+end
+
+function VidPlayer:_updatePlayButton()
+	if self.Instances.PlayButton then
+		self.Instances.PlayButton.Text = (self.State == "playing") and "Pause" or "Play"
 	end
 end
 
-status.Text = "preloading textures..."
-pcall(function()
-	ContentProvider:PreloadAsync(frameLabels)
-end)
-
-frameLabels[1].Visible = true
-
-local audioPath = CACHE_DIR .. "/audio.ogg"
-local sound = Instance.new("Sound")
-sound.SoundId = _getcustomasset(audioPath)
-sound.Volume = 1
-sound.Looped = false
-sound.Parent = workspace
-
-local conn
-local cleaned = false
-local function cleanup()
-	if cleaned then return end
-	cleaned = true
-	if conn then conn:Disconnect() end
-	if sound then
-		sound:Stop()
-		sound:Destroy()
-	end
-	if gui then gui:Destroy() end
+function VidPlayer:_startLoop()
+	if self._conn then return end
+	self._conn = RunService.RenderStepped:Connect(function()
+		if self._destroyed or not self._sound then return end
+		local t = self._sound.TimePosition
+		local idx = math.clamp(math.floor(t * FPS) + 1, 1, FRAME_COUNT)
+		if idx ~= self._lastIdx then
+			if self._labels[idx] then self._labels[idx].Visible = true end
+			if self._labels[self._lastIdx] then self._labels[self._lastIdx].Visible = false end
+			self._lastIdx = idx
+			if self.OnFrame then pcall(self.OnFrame, idx) end
+		end
+		if self.Instances.SeekFill then
+			local frac = (AUDIO_DURATION > 0) and math.clamp(t / AUDIO_DURATION, 0, 1) or 0
+			self.Instances.SeekFill.Size = UDim2.new(frac, 0, 1, 0)
+		end
+		if self.Instances.TimeLabel then
+			self.Instances.TimeLabel.Text = fmtTime(t) .. " / " .. fmtTime(AUDIO_DURATION)
+		end
+	end)
 end
 
-closeBtn.MouseButton1Click:Connect(cleanup)
-sound.Ended:Connect(cleanup)
+-- Build GUI + load media (no playback). Yields. Returns self.
+function VidPlayer:Prepare()
+	if self._destroyed then return self end
+	self:_ensureGui()
+	self:Load()
+	self:_ensureLabels()
+	self:_ensureSound()
+	if not self._conn then self:_startLoop() end
+	return self
+end
 
-status.Text = string.format("0.0s / %.1fs", AUDIO_DURATION)
-sound:Play()
-
-local lastIdx = 1
-conn = RunService.RenderStepped:Connect(function()
-	if cleaned then return end
-	local t = sound.TimePosition
-	local idx = math.clamp(math.floor(t * FPS) + 1, 1, FRAME_COUNT)
-	if idx ~= lastIdx then
-		frameLabels[idx].Visible = true
-		frameLabels[lastIdx].Visible = false
-		lastIdx = idx
+function VidPlayer:Play()
+	if self._destroyed then return self end
+	self:Prepare()
+	if self.State == "paused" then
+		self._sound:Resume()
+	else
+		self._sound:Play()
 	end
-	status.Text = string.format("%.1fs / %.1fs", t, AUDIO_DURATION)
-end)
+	self:_setState("playing")
+	self:_updatePlayButton()
+	return self
+end
+
+function VidPlayer:Pause()
+	if self._sound then self._sound:Pause() end
+	self:_setState("paused")
+	self:_updatePlayButton()
+	return self
+end
+
+function VidPlayer:Resume()
+	return self:Play()
+end
+
+function VidPlayer:TogglePause()
+	if self.State == "playing" then
+		self:Pause()
+	else
+		self:Play()
+	end
+	return self
+end
+
+function VidPlayer:Stop()
+	if self._sound then self._sound:Stop() end
+	if self._labels then
+		if self._labels[self._lastIdx] then self._labels[self._lastIdx].Visible = false end
+		self._labels[1].Visible = true
+		self._lastIdx = 1
+	end
+	self:_setState("stopped")
+	self:_updatePlayButton()
+	return self
+end
+
+function VidPlayer:Seek(seconds)
+	if self._sound then
+		self._sound.TimePosition = math.clamp(seconds, 0, math.max(0, AUDIO_DURATION - 0.05))
+	end
+	return self
+end
+
+function VidPlayer:SetVolume(v)
+	self.Config.Volume = v
+	if self._sound then self._sound.Volume = v end
+	return self
+end
+
+function VidPlayer:Destroy()
+	if self._destroyed then return self end
+	self._destroyed = true
+	if self._conn then self._conn:Disconnect() self._conn = nil end
+	if self._sound then
+		self._sound:Stop()
+		self._sound:Destroy()
+		self._sound = nil
+	end
+	if self.Instances.Gui then self.Instances.Gui:Destroy() end
+	self:_setState("destroyed")
+	return self
+end
+
+-- One-call convenience: build, load, and (if Config.AutoPlay) play.
+function VidPlayer:Run()
+	self:Prepare()
+	if self.Config.AutoPlay then
+		self:Play()
+	end
+	return self
+end
+
+return VidPlayer.new()

@@ -264,6 +264,7 @@ def encode():
             height=meta["height"],
             audio_duration=meta["audio_duration"],
             cache_dir=meta["cache_dir"],
+            title=meta.get("title", "video"),
         )
         jobs.player_path(job_id).write_text(lua, "utf-8")
 
@@ -276,6 +277,10 @@ def encode():
         "playback_url": playback_url,
         "frame_count": meta["frame_count"],
         "duration": meta["audio_duration"],
+        "fps": meta["fps"],
+        "width": meta["width"],
+        "height": meta["height"],
+        "has_video": meta.get("has_video", True),
         "title": meta.get("title"),
         "cache_dir": meta["cache_dir"],
         "loadstring_line": f'loadstring(game:HttpGet("{playback_url}"))()',
