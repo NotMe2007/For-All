@@ -1,3 +1,4 @@
+local placeId = game.PlaceId
 if placeId == 3351674303 then --Driving Empire
     loadstring(game:HttpGet("https://api.jnkie.com/api/v1/luascripts/public/c40fe1cd7698bc6bc8b1f96169a26d734c0ea64501fbafff675804f85d48d7cc/download"))()
 elseif placeId == 77085202503540 then -- Grow a Garden 2
