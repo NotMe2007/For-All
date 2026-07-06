@@ -15947,14 +15947,53 @@ if gethsfuncs then
 			end
 		end
 
-		-- Hook it directly into Dex
+		-- Decompiler dispatch order:
+		--   1. Executor's built-in `decompile()` — near-instant when it exists,
+		--      because it's implemented natively for that executor's bytecode.
+		--   2. lua.expert network API — used ONLY when the executor has no
+		--      built-in, or the built-in returned nothing / an obvious error,
+		--      or the user checked "Prefer Fallback Decompiler" in Settings.
+		--   3. Give up with a diagnostic comment.
+		--
+		-- Cheap heuristic for "built-in failed": nil, empty, or the result
+		-- starts with an "--" error comment / literal "nil". This catches
+		-- stub decompile() implementations without over-flagging real output
+		-- (real decompiled scripts almost always start with `local`, `do`,
+		-- `function`, a header comment `--[[`, or similar, and are longer).
+		local function builtinLooksBad(s)
+			if type(s) ~= "string" or #s == 0 then return true end
+			local head = s:sub(1, 200)
+			if head:find("^%s*nil%s*$")                                 then return true end
+			if head:find("Failed to decompile", 1, true)                then return true end
+			if head:find("decompile is not enabled", 1, true)           then return true end
+			if head:find("not a valid script", 1, true)                 then return true end
+			if head:find("Script has no bytecode", 1, true)             then return true end
+			-- Very short output that also starts with a single-line `--` is
+			-- almost certainly a stub. Real decompiles are far longer.
+			if #s < 40 and head:find("^%s*%-%-") then return true end
+			return false
+		end
+
 		env.decompile = function(...)
-			if typeof(getscriptbytecode) == "function" then
-				-- Forced to only use lua.expert API
-				return LuaExpertDec(...)
-			else
-			    return "-- getscriptbytecode is not supported by your executor. Cannot decompile."
+			local preferFallback = Settings.Decompiler and Settings.Decompiler.PreferDecompilerFallback
+
+			-- 1) Executor's native decompiler first (unless user opted out).
+			if typeof(decompile) == "function" and not preferFallback then
+				local ok, result = pcall(decompile, ...)
+				if ok and not builtinLooksBad(result) then
+					return result
+				end
+				-- else: fall through to network fallback
 			end
+
+			-- 2) Network fallback via lua.expert (requires getscriptbytecode).
+			if typeof(getscriptbytecode) == "function" then
+				return LuaExpertDec(...)
+			end
+
+			-- 3) Nothing available.
+			return "-- No decompiler available on this executor.\n"
+				.. "-- (no native `decompile`, no `getscriptbytecode` for network fallback)"
 		end
 
 		if Main.Elevated then
