@@ -48,19 +48,31 @@
 	        }
 	    end,
 
-	    ApplyData = function(data)
-	        if data.Settings  then Settings  = data.Settings  end
-	        if data.Toggles   then Toggles   = data.Toggles   end
-	        if data.WalkSpeed then Character.WalkSpeed = data.WalkSpeed end
-	        if data.Fly_Speed then Character.Fly_Speed = data.Fly_Speed end
-	        -- IMPORTANT: also push values back into the UI elements, e.g.
-	        --   if data.WalkSpeed and D.WalkSpeedSlider then D.WalkSpeedSlider:Set(data.WalkSpeed) end
-	        -- so toggles/sliders visually match the loaded config.
+	    -- ApplyData receives (data, apply). Wrap each field in apply("Label", fn):
+	    -- every apply() runs in isolation, so if the script CHANGED and a setting/UI
+	    -- element no longer exists, only THAT line is skipped - the rest still load,
+	    -- and the user gets a "Script Updated" popup instead of a broken config.
+	    ApplyData = function(data, apply)
+	        apply("Settings",  function() if data.Settings  then Settings  = data.Settings  end end)
+	        apply("Toggles",   function() if data.Toggles   then Toggles   = data.Toggles   end end)
+	        apply("WalkSpeed", function()
+	            if data.WalkSpeed then
+	                Character.WalkSpeed = data.WalkSpeed
+	                if D.WalkSpeedSlider then D.WalkSpeedSlider:Set(data.WalkSpeed) end -- keep UI in sync
+	            end
+	        end)
+	        apply("Fly Speed", function() if data.Fly_Speed then Character.Fly_Speed = data.Fly_Speed end end)
+	        -- (A plain monolithic ApplyData without `apply` still works - it just loads
+	        --  up to the first error instead of skipping only the dead field.)
 	    end,
 
 	    OnUnload = function()   -- optional: your own cleanup for the Unload button
 	        -- for _, t in ipairs(getgenv().MyLoops or {}) do task.cancel(t) end
 	        -- for _, c in ipairs(getgenv().MyConns or {}) do c:Disconnect() end
+	    end,
+
+	    OnPartialLoad = function(skipped)  -- optional: fires when a load skipped removed
+	        -- settings (skipped = list of labels). e.g. trigger your ZenX_Gate update here.
 	    end,
 	})
 
@@ -156,10 +168,41 @@ function ZenXConfig.Setup(opts)
 		if not isfile(path) then notify("Config", "Config '" .. name .. "' not found."); return false end
 		local ok, data = pcall(function() return HttpService:JSONDecode(readfile(path)) end)
 		if not ok or type(data) ~= "table" then notify("Config", "Config '" .. name .. "' is corrupt."); return false end
-		local aok, err = pcall(ApplyData, data)
-		if aok then notify("Config", "Loaded '" .. name .. "'."); return true end
-		notify("Config", "Error applying config: " .. tostring(err))
-		return false
+
+		-- Graceful / partial load: if the script updated and a saved setting no longer
+		-- exists, we skip just that field instead of dropping the whole config. Each
+		-- apply() call is isolated so one dead field can't abort the rest.
+		local skipped = {}
+		local function apply(labelOrFn, maybeFn)
+			local label, fn
+			if type(labelOrFn) == "function" then
+				fn, label = labelOrFn, "a setting"
+			else
+				label, fn = tostring(labelOrFn), maybeFn
+			end
+			if type(fn) ~= "function" then return end
+			local aok, err = pcall(fn)
+			if not aok then table.insert(skipped, label) end
+		end
+
+		local runOk = pcall(ApplyData, data, apply)
+		if not runOk then
+			-- Monolithic ApplyData (no `apply` wrapping) that errored partway: it loaded
+			-- whatever ran before the error. Treat as a graceful partial, not a failure.
+			table.insert(skipped, "one or more removed settings")
+		end
+
+		if #skipped > 0 then
+			local list = table.concat(skipped, ", ")
+			notify("Script Updated", "Loaded '" .. name .. "', but " .. #skipped ..
+				" saved setting(s) no longer exist and were skipped (" .. list ..
+				"). Please update to the latest version.")
+			if opts.OnPartialLoad then pcall(opts.OnPartialLoad, skipped) end
+			return true
+		end
+
+		notify("Config", "Loaded '" .. name .. "'.")
+		return true
 	end
 
 	local function deleteConfig(name)

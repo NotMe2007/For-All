@@ -1,0 +1,7 @@
+{
+  "minBuild": 45,
+  "latestBuild": 47,
+  "killedBuilds": [42, 43],
+  "latestUrl": "https://raw.githubusercontent.com/NotMe2007/For-All/main/My%20own%20rayfield/SeneX.lua",
+  "message": "A security fix landed in a newer build - updating you now..."
+}
