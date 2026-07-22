@@ -19,6 +19,11 @@ obfuscate_all.ps1
 RAYFIELD_MIGRATION.md
 Main.lua
 
-# "My own rayfield": keep the library + tooling tracked, ignore only local build wrappers
+# "My own rayfield": only the OBFUSCATED SeneX.lua + public companion modules go public.
+# Keep the readable build inputs/tools PRIVATE - they would expose the un-obfuscated GUI
+# source (the whole point of shipping SeneX.lua obfuscated).
 My own rayfield/build.ps1
 My own rayfield/build.bat
+My own rayfield/dump_interface.lua
+My own rayfield/SeneX_Interface_generated.lua
+My own rayfield/SeneX_KeyUI_generated.lua
