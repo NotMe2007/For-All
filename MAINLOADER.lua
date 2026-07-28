@@ -11,7 +11,7 @@ elseif placeId == 129548273770183 or placeId == 139877050346809 or placeId == 92
 elseif placeId == 112781992170158 then -- hatch1millionchicken
     loadstring(game:HttpGet("https://mentalhub.me/loader"))()
 elseif placeId == 78491332555415 then -- watchnumbergoup
-    loadstring(game:HttpGet("https://mentalhub.me/loader"))()
+    loadstring(game:HttpGet("https://api.jnkie.com/api/v1/luascripts/public/f9426ecf52a3e3418af4b0e6c8f632d372cc1bba09b25781c428c0a50d7613d7/download"))()
 elseif placeId == 123821081589134 then -- BreakYourBones
     loadstring(game:HttpGet("https://mentalhub.me/loader"))()
 elseif placeId == 8737899170 or placeId == 3317771874 or placeId == 16498369169 or placeId == 17503543197 or placeId == 140403681187145 or placeId == 15502339080 or placeId == 15588442388 or placeId == 13764885284 or placeId == 95635359880599 or placeId == 119454325063278 or placeId == 99703032952567 or placeId == 131952481663528 or placeId == 90139951126997 then -- PetSim99
