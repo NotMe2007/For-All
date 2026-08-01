@@ -5,7 +5,7 @@ elseif placeId == 77085202503540 then -- Grow a Garden 2
 elseif placeId == 18923620224 then -- Anime Warriors III
     loadstring(game:HttpGet("https://api.jnkie.com/api/v1/luascripts/public/49ed2b30735c5526699617d373a80e49f34504b13606b3d7a92b5746b0844f4c/download"))()
 elseif placeId == 91296119701853 or placeId == 103967585774012 then -- farm a fish
-    loadstring(game:HttpGet("https://mentalhub.me/loader"))()
+    loadstring(game:HttpGet("https://api.jnkie.com/api/v1/luascripts/public/4b11a094ed5bdc4603772910eb707219dddea13fb1206c69ba29fee3356aed94/download"))()
 elseif placeId == 129548273770183 or placeId == 139877050346809 or placeId == 92050243909420 or placeId == 99207780794303 then -- wastetime
     loadstring(game:HttpGet("https://mentalhub.me/loader"))()
 elseif placeId == 112781992170158 then -- hatch1millionchicken
