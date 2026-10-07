@@ -1,0 +1,14 @@
+{
+  "name": "senex-icons",
+  "private": true,
+  "description": "Builds the SeneX icon pack (../icons) from lucide-static",
+  "type": "module",
+  "scripts": {
+    "build": "node build_icons.mjs"
+  },
+  "dependencies": {
+    "@resvg/resvg-js": "^2.6.2",
+    "lucide-static": "^1.52.0",
+    "pngjs": "^7.0.0"
+  }
+}

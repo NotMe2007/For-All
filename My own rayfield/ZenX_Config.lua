@@ -421,7 +421,7 @@ function ZenXConfig.Setup(opts)
 	end
 
 	-- ── Build the Configuration tab ─────────────────────────────────────────────
-	local Tab = Window:CreateTab(opts.TabName or "Configuration", opts.TabIcon or 4483362458)
+	local Tab = Window:CreateTab(opts.TabName or "Configuration", opts.TabIcon or "user-cog")
 	local ConfigName = ""
 	local scopeToggle, statusLabel
 
