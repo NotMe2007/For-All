@@ -9,8 +9,8 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/mai
 
 - **No key or a wrong key:** nothing happens. That's intended, and it isn't a bug.
 - **Unsupported game:** you get a "This game is not supported" popup and a line in the F9 console.
-- **Hops:** for hubs that reload themselves after a teleport (Gorilla Warfare, Hunt Giant Fish, Route 06, Wanted, World // Zero, RIVALS), the loader makes the reload come back as the **tester** build. PS99, Break Your Bones and Watch Number Go Up reload the **public** build after a hop, so re-run the tester loader there. Every other game needs a manual re-execute after a hop or rejoin.
-- **Your report:** the loader prints `[ZenX tester V1] <game> | GameId ... | PlaceId ...` in the console. Copy that line into every bug report.
+- **Hops:** hubs that reload themselves after a teleport (Break Your Bones, Gorilla Warfare, Hunt Giant Fish, Jujutsu: Zero raids, PS99, RIVALS, Route 06, Wanted, Watch Number Go Up, World // Zero) check for your tester key when they load. If it's there, the reload after a hop comes back as the **tester** build. Every other game needs a manual re-execute after a hop or rejoin.
+- **Your report:** the loader prints `[ZenX tester V2] <game> | GameId ... | PlaceId ...` in the console. Copy that line into every bug report.
 - **Script version:** shown in the hub window title or on its Info/Settings tab.
 
 ## Before you report anything
@@ -31,34 +31,34 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/mai
 | 5 | Attack on Titan Revolution | V5 | Combat tab experimental |
 | 6 | Bee Swarm Simulator | 0.0.19 | Stable |
 | 7 | Blade Ball | V0.7.1 | **Needs testing** |
-| 8 | Break Your Bones | V1 | Stable |
+| 8 | Break Your Bones | V2 | Stable |
 | 9 | Catch And Tame | V1 | **Needs testing** |
 | 10 | Claw Fishing | V6 | **Needs testing** |
 | 11 | Creatures of Sonaria | V0.7.6 | Stable |
 | 12 | Driving Empire | V4 | **Needs testing** |
 | 13 | Farm a Fish | V2.5.0.2 | Stable (public build) |
 | 14 | Final Swarm | V3 | Stable |
-| 15 | Gorilla Warfare (Survive a Million Monkeys) | V2 | **Needs testing** (new abilities) |
+| 15 | Gorilla Warfare (Survive a Million Monkeys) | V3 | **Needs testing** (new abilities) |
 | 16 | Grow a Garden 2 | V0.1.3 | Stable |
 | 17 | Hatch 1 Million Chickens | (title only) | Stable |
-| 18 | Hunt Giant Fish | V3 | **Needs testing** |
-| 19 | Jujutsu: Zero | V3 | Stable |
+| 18 | Hunt Giant Fish | V4 | **Needs testing** |
+| 19 | Jujutsu: Zero | V4 | Stable |
 | 20 | My Cafe | V1 | **Needs testing** |
 | 21 | Pay Your Debts! | V1 | **Needs testing** |
 | 22 | Pet Simulator 99 | v2.0 | Stable (Season Pass untested) |
 | 23 | Pop & Collect (Pop Bubbles) | (none) | Experimental |
 | 24 | Reeled | V5 | **Needs testing** |
-| 25 | RIVALS | v4.3 | Stable |
-| 26 | Route 06 | V1 | **Needs testing** |
+| 25 | RIVALS | v4.4 | Stable |
+| 26 | Route 06 | V2 | **Needs testing** |
 | 27 | Soul Eater: Resonance | V2 | Stable |
 | 28 | Soul Hero | V4 | **Needs testing** |
 | 29 | Steal An Egg | V5 | Stable |
 | 30 | The Lost Land | V1 | Stable (no GUI) |
 | 31 | Ultra Unfair | V1 | Stable |
-| 32 | Wanted | V0.1.1 | **Needs testing** |
-| 33 | Watch Number Go Up | V1 | Stable |
+| 32 | Wanted | V0.1.2 | **Needs testing** |
+| 33 | Watch Number Go Up | V2 | Stable |
 | 34 | Wingblade Arena | V1 | Stable |
-| 35 | World // Zero | V1 | Stable |
+| 35 | World // Zero | V2 | Stable |
 
 **Status key:**
 - **Needs testing:** new or changed builds that haven't been played in-game much yet. Your reports matter most here.
@@ -154,7 +154,7 @@ Auto parry with:
 - Use the Training place to test parry timing.
 - The DEBUG tab has logging/recording for reports.
 
-## 8. Break Your Bones (V1)
+## 8. Break Your Bones (V2)
 Farms bone breaks (slam or slide-push) with auto cash-out. Also automates:
 - Spells, upgrades, rebirths
 - Quests, pals, forge, free rewards
@@ -163,7 +163,7 @@ Farms bone breaks (slam or slide-push) with auto cash-out. Also automates:
 - Forge/target modifiers need 1 rebirth.
 - Daily Chest needs the game's group joined.
 - If quest progress goes negative, press **Restart Quest**.
-- After a teleport it reloads the **public** build. Re-run the tester loader instead.
+- After a teleport it reloads the tester build by itself.
 
 ## 9. Catch And Tame (V1)
 Covers:
@@ -233,7 +233,7 @@ Wave survival helper:
 - Settings aren't saved. Set them again each execute.
 - Report damage taken with Auto Dodge + Keep away **on**.
 
-## 15. Gorilla Warfare (V2)
+## 15. Gorilla Warfare (V3)
 Auto-shoots monkeys and bosses through the game's aim system and dodges telegraphed blasts. It can also shift your hitbox **under** the map. V2 adds:
 - Boss dodge while Under
 - Auto Satchel (throw + detonate without knockback)
@@ -272,7 +272,7 @@ Full farm:
 - Config: `workspace/MentalHub`. Delete it to reset.
 - **Leave "Auto Gift Items to Player" OFF.** It gives your items away.
 
-## 18. Hunt Giant Fish (V3)
+## 18. Hunt Giant Fish (V4)
 Shoots fish (native or hub-aimed, incl. wallbang on private fish), fights bosses, sells/keeps catches, buys upgrades and claims every free reward.
 
 **Notes:**
@@ -280,7 +280,7 @@ Shoots fish (native or hub-aimed, incl. wallbang on private fish), fights bosses
 - Executor needs `queue_on_teleport`, `readfile`/`writefile` and `debug.getupvalue`.
 - If the hub draws over the game's start screen, report it.
 
-## 19. Jujutsu: Zero (V3)
+## 19. Jujutsu: Zero (V4)
 PvE grinder:
 - NPC farm with your skills
 - Level/story/board quests, auto grade up
@@ -292,7 +292,7 @@ It never targets players.
 - Start in the Main place.
 - No anti-AFK: after ~18 min with no real input the game moves you to the AFK place.
 - Clan auto-roll **replaces your clan** and spends rolls.
-- After a raid teleport, re-run the loader inside the raid.
+- Keep **Re-run hub after raid teleport** on: the raid teleport reloads the tester build. If your executor has no `queue_on_teleport`, re-run the loader inside the raid.
 - If an old `GUI.lua` / `SeneX.lua` sits in your workspace folder, delete it.
 
 ## 20. My Cafe (V1)
@@ -322,7 +322,7 @@ Covers:
 
 **Notes:**
 - Re-runs itself after hops, so **don't** re-execute by hand.
-  - The hop reload loads the public build, not the tester one. Say so if a bug only shows after a hop.
+  - The hop reload brings back the tester build. Say so if a bug only shows after a hop.
 - Turn on **Settings > Debug Logging** before reporting.
 - If the HUD vanishes after a minigame, use **Minigames > Fix HUD**.
 - Config folder: `workspace/ZenX`.
@@ -347,7 +347,7 @@ Covers:
 - **Never press the death-screen Revive.** It costs Robux.
 - Auto refill ammo only works at the Ammo Box.
 
-## 25. RIVALS (v4.3)
+## 25. RIVALS (v4.4)
 Covers:
 - Hold-RMB aimbot
 - ESP
@@ -359,7 +359,7 @@ Covers:
 - If RIVALS updated, a popup asks "Load anyway / Don't load". Report it.
 - Needs `Drawing` + `mousemoverel` support.
 
-## 26. Route 06 (V1)
+## 26. Route 06 (V2)
 Zombie co-op:
 - Silent aim, auto shoot, kill aura
 - Objectives, loot/shop at checkpoints
@@ -428,7 +428,7 @@ Covers:
 - Aura range above ~23 or Float can get you kicked. **Alt only.**
 - The TEST buttons are measurement tools, not features.
 
-## 32. Wanted (V0.1.1)
+## 32. Wanted (V0.1.2)
 Criminal-route auto farm:
 - ATMs, safes, stores, jewelry and bank vaults
 - Airdrops, cargo jet
@@ -441,14 +441,14 @@ Plus police-side silent aim/ESP and crate opening.
 - Cargo jet, gas station safes and office PCs are beta. Report them separately.
 - When reporting, use **"Save incident snapshot now"**. Files go in `workspace/ZenX/Wanted`.
 
-## 33. Watch Number Go Up (V1)
+## 33. Watch Number Go Up (V2)
 Incremental farmer:
 - Runes and every upgrade tier
 - Prestige layers on timers
 - Gems, challenges, achievements, time tokens, research
 
 **Notes:**
-- Rejoin/Server Hop reload the **public** loader, not the tester build. Re-run the tester loader after a hop.
+- Rejoin/Server Hop reload the tester build by themselves.
 - Use **Unload ZenX** (System tab) before re-executing.
 
 ## 34. Wingblade Arena (V1)
@@ -466,7 +466,7 @@ PvP spear arena:
 - Risky features arm a staff guard that panics when the developer joins.
 - Re-run the loader in each new server.
 
-## 35. World // Zero (V1)
+## 35. World // Zero (V2)
 Covers:
 - Kill aura with the game's own attacks and skills
 - Dungeon loop (start, clear, chests, repeat/auto-level)
