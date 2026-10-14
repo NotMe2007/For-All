@@ -10,6 +10,7 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/mai
 - **No key or a wrong key:** nothing happens. That's intended, and it isn't a bug.
 - **Unsupported game:** you get a "This game is not supported" popup and a line in the F9 console.
 - **Hops:** hubs that reload themselves after a teleport (Break Your Bones, Gorilla Warfare, Hunt Giant Fish, Jujutsu: Zero raids, PS99, RIVALS, Route 06, Wanted, Watch Number Go Up, World // Zero) check for your tester key when they load. If it's there, the reload after a hop comes back as the **tester** build. Every other game needs a manual re-execute after a hop or rejoin.
+- **"Script is outdated" popup:** when the game updated after the script was last updated, the hub asks before it loads (**Load anyway** / **Don't load**). Load anyway is remembered for that game until it updates again (`workspace/ZenX_Studio/VersionCheck`). If you load anyway, say so in your report: those are exactly the bugs we need. RIVALS uses its own in-game version number for this.
 - **Your report:** the loader prints `[ZenX tester V2] <game> | GameId ... | PlaceId ...` in the console. Copy that line into every bug report.
 - **Script version:** shown in the hub window title or on its Info/Settings tab.
 
@@ -24,41 +25,41 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/mai
 
 | # | Game | Script version | Status |
 |---|------|----------------|--------|
-| 1 | Adopt Me! | V1 | New, needs testing |
-| 2 | Anime Card Clash | 2026.08.27 | Stable |
-| 3 | Anime Squadron (Anime Squad) | V1 | New, needs testing |
-| 4 | Anime Warriors III | V0.4.3 | Stable |
-| 5 | Attack on Titan Revolution | V5 | Combat tab experimental |
+| 1 | Adopt Me! | V2 | New, needs testing |
+| 2 | Anime Card Clash | 2026.10.13 | Stable |
+| 3 | Anime Squadron (Anime Squad) | V2 | New, needs testing |
+| 4 | Anime Warriors III | V0.4.4 | Stable |
+| 5 | Attack on Titan Revolution | V6 | Combat tab experimental |
 | 6 | Bee Swarm Simulator | 0.0.19 | Stable |
-| 7 | Blade Ball | V0.7.1 | **Needs testing** |
-| 8 | Break Your Bones | V2 | Stable |
-| 9 | Catch And Tame | V1 | **Needs testing** |
-| 10 | Claw Fishing | V6 | **Needs testing** |
-| 11 | Creatures of Sonaria | V0.7.6 | Stable |
-| 12 | Driving Empire | V4 | **Needs testing** |
+| 7 | Blade Ball | V0.7.2 | **Needs testing** |
+| 8 | Break Your Bones | V3 | Stable |
+| 9 | Catch And Tame | V2 | **Needs testing** |
+| 10 | Claw Fishing | V7 | **Needs testing** |
+| 11 | Creatures of Sonaria | V0.7.7 | Stable |
+| 12 | Driving Empire | V5 | **Needs testing** |
 | 13 | Farm a Fish | V2.5.0.2 | Stable (public build) |
-| 14 | Final Swarm | V3 | Stable |
-| 15 | Gorilla Warfare (Survive a Million Monkeys) | V3 | **Needs testing** (new abilities) |
-| 16 | Grow a Garden 2 | V0.1.3 | Stable |
+| 14 | Final Swarm | V4 | Stable |
+| 15 | Gorilla Warfare (Survive a Million Monkeys) | V4 | **Needs testing** (new abilities) |
+| 16 | Grow a Garden 2 | V0.1.4 | Stable |
 | 17 | Hatch 1 Million Chickens | (title only) | Stable |
-| 18 | Hunt Giant Fish | V4 | **Needs testing** |
-| 19 | Jujutsu: Zero | V4 | Stable |
-| 20 | My Cafe | V1 | **Needs testing** |
-| 21 | Pay Your Debts! | V1 | **Needs testing** |
-| 22 | Pet Simulator 99 | v2.0 | Stable (Season Pass untested) |
+| 18 | Hunt Giant Fish | V5 | **Needs testing** |
+| 19 | Jujutsu: Zero | V5 | Stable |
+| 20 | My Cafe | V2 | **Needs testing** |
+| 21 | Pay Your Debts! | V2 | **Needs testing** |
+| 22 | Pet Simulator 99 | v2.1 | Stable (Season Pass untested) |
 | 23 | Pop & Collect (Pop Bubbles) | (none) | Experimental |
-| 24 | Reeled | V5 | **Needs testing** |
-| 25 | RIVALS | v4.4 | Stable |
-| 26 | Route 06 | V2 | **Needs testing** |
-| 27 | Soul Eater: Resonance | V2 | Stable |
-| 28 | Soul Hero | V4 | **Needs testing** |
-| 29 | Steal An Egg | V5 | Stable |
-| 30 | The Lost Land | V1 | Stable (no GUI) |
-| 31 | Ultra Unfair | V1 | Stable |
-| 32 | Wanted | V0.1.2 | **Needs testing** |
-| 33 | Watch Number Go Up | V2 | Stable |
-| 34 | Wingblade Arena | V1 | Stable |
-| 35 | World // Zero | V2 | Stable |
+| 24 | Reeled | V6 | **Needs testing** |
+| 25 | RIVALS | v4.5 | Stable |
+| 26 | Route 06 | V3 | **Needs testing** |
+| 27 | Soul Eater: Resonance | V3 | Stable |
+| 28 | Soul Hero | V5 | **Needs testing** |
+| 29 | Steal An Egg | V6 | Stable |
+| 30 | The Lost Land | V2 | Stable (no GUI) |
+| 31 | Ultra Unfair | V2 | Stable |
+| 32 | Wanted | V0.1.3 | **Needs testing** |
+| 33 | Watch Number Go Up | V3 | Stable |
+| 34 | Wingblade Arena | V2 | Stable |
+| 35 | World // Zero | V3 | Stable |
 
 **Status key:**
 - **Needs testing:** new or changed builds that haven't been played in-game much yet. Your reports matter most here.
@@ -68,7 +69,7 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/mai
 
 ---
 
-## 1. Adopt Me! (V1)
+## 1. Adopt Me! (V2)
 Farms pet and baby needs with the game's own timers. It also rotates Full Grown pets, can buy eggs with bucks, and claims paychecks, daily login, achievements and battle pass. It never trades, sells or releases.
 
 **Features:**
@@ -85,7 +86,7 @@ Farms pet and baby needs with the game's own timers. It also rotates Full Grown 
 - Items are only used up if you turn on Auto Buy Egg or Allow eating.
 - When reporting, say which tab, toggle and ailment was active.
 
-## 2. Anime Card Clash (2026.08.27)
+## 2. Anime Card Clash (2026.10.13)
 Collects world pickups (elixirs, potions, boxes) with priority/exclude filters. It also runs crystal farm, exploration, story progress, Bizarre Dungeon runs, claims and potion crafting on timers.
 
 **Notes:**
@@ -94,7 +95,7 @@ Collects world pickups (elixirs, potions, boxes) with priority/exclude filters. 
 - Leave **Auto Update / Update URL** blank.
 - Auto Rejoin doesn't re-run the script. Put the loader in autoexec if you test it.
 
-## 3. Anime Squadron (V1)
+## 3. Anime Squadron (V2)
 Tower-defense farm. It turns on the game's own Autoplay bot, plus auto start/replay/next act, auto upgrade, auto summon, auto ult and a game speed setter.
 
 **Notes:**
@@ -102,7 +103,7 @@ Tower-defense farm. It turns on the game's own Autoplay bot, plus auto start/rep
 - 3x speed needs the 3x Speed gamepass.
 - Re-run the loader after every new match server.
 
-## 4. Anime Warriors III (V0.4.3)
+## 4. Anime Warriors III (V0.4.4)
 Full hub covering:
 - Auto farm, kill aura, priority queue
 - Eggs, quests, shop, trait reroller
@@ -113,7 +114,7 @@ Full hub covering:
 - "Auto Hatch - server" needs the game's auto-hatch unlock. Otherwise use "Auto Open - manual loop".
 - Panic: "Stop ALL server auto". Use "Unload ZenX" before re-running.
 
-## 5. Attack on Titan Revolution (V5)
+## 5. Attack on Titan Revolution (V6)
 Hub economy:
 - Host/join missions
 - Claim quests, battle pass and titles
@@ -140,7 +141,7 @@ Macro V3 on SeneX. It covers:
 - Hidden stickers are per account, so hopping won't find new ones on the same account.
 - Some travel is detectable and the game has server-side cheater flags. **Use an alt.**
 
-## 7. Blade Ball (V0.7.1)
+## 7. Blade Ball (V0.7.2)
 Auto parry with:
 - Pre-parry and clash spam
 - Target choice (mouse, farthest, closest, bounty...)
@@ -154,7 +155,7 @@ Auto parry with:
 - Use the Training place to test parry timing.
 - The DEBUG tab has logging/recording for reports.
 
-## 8. Break Your Bones (V2)
+## 8. Break Your Bones (V3)
 Farms bone breaks (slam or slide-push) with auto cash-out. Also automates:
 - Spells, upgrades, rebirths
 - Quests, pals, forge, free rewards
@@ -165,7 +166,7 @@ Farms bone breaks (slam or slide-push) with auto cash-out. Also automates:
 - If quest progress goes negative, press **Restart Quest**.
 - After a teleport it reloads the tester build by itself.
 
-## 9. Catch And Tame (V1)
+## 9. Catch And Tame (V2)
 Covers:
 - Auto lasso/catch by rarity, minigames, fishing
 - Submarine, farming, fruit/food buying
@@ -177,7 +178,7 @@ Covers:
 - Auto Fish: stand at the water, facing it, with the rod in your backpack.
 - Settings warns you if the game updated. Report that warning.
 
-## 10. Claw Fishing (V6)
+## 10. Claw Fishing (V7)
 Drives the boat and catches fish by rarity/value filters. It also:
 - Docks to deposit and collect cash
 - Buys gear, aquarium upgrades and rebirths
@@ -188,7 +189,7 @@ Drives the boat and catches fish by rarity/value filters. It also:
 - EXPERIMENTAL options (insta catch, fast claw drop, Ocean Gate) are the risky ones. Report them separately.
 - Panic and Unload are in Settings.
 
-## 11. Creatures of Sonaria (V0.7.6)
+## 11. Creatures of Sonaria (V0.7.7)
 Covers:
 - Infinite stamina/oxygen
 - Damage and debuff protection
@@ -201,7 +202,7 @@ Covers:
 - Toggles with a warning sign are riskier. **Alt only.**
 - Don't spam toggles.
 
-## 12. Driving Empire (V4)
+## 12. Driving Empire (V5)
 Job farm: it drives your own car to ATMs, deliveries and crime scenes (Criminal, Police and Delivery money). Also has vehicle mods, ESP and teleports.
 
 **Notes:**
@@ -221,7 +222,7 @@ Plus shop restock tools, event automation and your own Discord webhook.
 - Workspace folder `MentalHubFAF` holds the cached UI and configs. Delete it to get a fresh UI and config.
 - Don't put anything in `SCRIPT_KEY` for tester runs.
 
-## 14. Final Swarm (V3)
+## 14. Final Swarm (V4)
 Wave survival helper:
 - Auto dodge boss attacks and units
 - Lava avoid, no knockback/slow
@@ -233,7 +234,7 @@ Wave survival helper:
 - Settings aren't saved. Set them again each execute.
 - Report damage taken with Auto Dodge + Keep away **on**.
 
-## 15. Gorilla Warfare (V3)
+## 15. Gorilla Warfare (V4)
 Auto-shoots monkeys and bosses through the game's aim system and dodges telegraphed blasts. It can also shift your hitbox **under** the map. V2 adds:
 - Boss dodge while Under
 - Auto Satchel (throw + detonate without knockback)
@@ -250,7 +251,7 @@ Auto-shoots monkeys and bosses through the game's aim system and dodges telegrap
   - **F9:** cycle hitbox
 - Executor needs `debug.getupvalue(s)`.
 
-## 16. Grow a Garden 2 (V0.1.3)
+## 16. Grow a Garden 2 (V0.1.4)
 Covers:
 - Collect fruit by your weight rules
 - Sell at NPC Steven (including market boosts)
@@ -272,7 +273,7 @@ Full farm:
 - Config: `workspace/MentalHub`. Delete it to reset.
 - **Leave "Auto Gift Items to Player" OFF.** It gives your items away.
 
-## 18. Hunt Giant Fish (V4)
+## 18. Hunt Giant Fish (V5)
 Shoots fish (native or hub-aimed, incl. wallbang on private fish), fights bosses, sells/keeps catches, buys upgrades and claims every free reward.
 
 **Notes:**
@@ -280,7 +281,7 @@ Shoots fish (native or hub-aimed, incl. wallbang on private fish), fights bosses
 - Executor needs `queue_on_teleport`, `readfile`/`writefile` and `debug.getupvalue`.
 - If the hub draws over the game's start screen, report it.
 
-## 19. Jujutsu: Zero (V4)
+## 19. Jujutsu: Zero (V5)
 PvE grinder:
 - NPC farm with your skills
 - Level/story/board quests, auto grade up
@@ -295,7 +296,7 @@ It never targets players.
 - Keep **Re-run hub after raid teleport** on: the raid teleport reloads the tester build. If your executor has no `queue_on_teleport`, re-run the loader inside the raid.
 - If an old `GUI.lua` / `SeneX.lua` sits in your workspace folder, delete it.
 
-## 20. My Cafe (V1)
+## 20. My Cafe (V2)
 Order bot (take, make, serve). It also:
 - Restocks and optimizes the menu
 - Buys upgrades and expansions
@@ -307,14 +308,14 @@ Order bot (take, make, serve). It also:
 - When reporting, turn on **Settings > Debug log** and copy the `[ZenX]` console lines.
 - Say if the game updated.
 
-## 21. Pay Your Debts! (V1)
+## 21. Pay Your Debts! (V2)
 The game swings for you. The hub steers your aim at the best piggy cluster and automates runs, bills, shopping, perks and rewards.
 
 **Notes:**
 - You only need Auto Aim + Auto Start Run.
 - **Leave "Unlock destructive actions" OFF.** Rebirth, Bankruptcy and Next Cycle wipe cycle progress, and "All In" is a real gamble.
 
-## 22. Pet Simulator 99 (v2.0)
+## 22. Pet Simulator 99 (v2.1)
 Covers:
 - Zone farm and the Hatch Wars event
 - Enchants, potions, pets, items, keys
@@ -334,7 +335,7 @@ Small helper with long-range drop collect, rapid fire multiplier, and a Stop & r
 - Wait until your weapon is ready, or you get "Weapon controller is not ready".
 - Report whether drops and kills actually **count** server-side.
 
-## 24. Reeled (V5)
+## 24. Reeled (V6)
 Covers:
 - Auto-cast fishing
 - Silent headshot aim to clear fish zones
@@ -347,7 +348,7 @@ Covers:
 - **Never press the death-screen Revive.** It costs Robux.
 - Auto refill ammo only works at the Ammo Box.
 
-## 25. RIVALS (v4.4)
+## 25. RIVALS (v4.5)
 Covers:
 - Hold-RMB aimbot
 - ESP
@@ -359,7 +360,7 @@ Covers:
 - If RIVALS updated, a popup asks "Load anyway / Don't load". Report it.
 - Needs `Drawing` + `mousemoverel` support.
 
-## 26. Route 06 (V2)
+## 26. Route 06 (V3)
 Zombie co-op:
 - Silent aim, auto shoot, kill aura
 - Objectives, loot/shop at checkpoints
@@ -370,7 +371,7 @@ Zombie co-op:
 - RISKY toggles (gun aura, fast fire, reach, speed > 1.15x, noclip, car autopilot) are likely kick sources. Test them last.
 - **End** = kill switch.
 
-## 27. Soul Eater: Resonance (V2)
+## 27. Soul Eater: Resonance (V3)
 Covers:
 - Attack aura with smart block
 - Auto skills and silent aim
@@ -383,7 +384,7 @@ Covers:
 - Re-execute after every teleport.
 - **"Redeem resetmystats" really resets your stats.**
 
-## 28. Soul Hero (V4)
+## 28. Soul Hero (V5)
 Idle auto-battler:
 - Progress levels, skill tree, rebirth
 - Totems, summon/hatch/evolve heroes
@@ -396,7 +397,7 @@ Robux-prompt killswitch is on by default.
 - Being in a party blocks rebirth.
 - Re-execute after rejoin.
 
-## 29. Steal An Egg (V5)
+## 29. Steal An Egg (V6)
 Covers:
 - Place/hatch eggs, sell pets
 - Auto-steal with safe-escape prediction
@@ -408,7 +409,7 @@ Covers:
 - Guards can still catch you.
 - "Auto trade up + craft essence" is irreversible.
 
-## 30. The Lost Land (V1, no GUI)
+## 30. The Lost Land (V2, no GUI)
 Survival auto-farm: chop, mine, hunt weak animals, pick up drops, auto eat/drink/heal. It never touches player buildings.
 
 **Notes:**
@@ -416,7 +417,7 @@ Survival auto-farm: chop, mine, hunt weak animals, pick up drops, auto eat/drink
 - Stop it with `_G.TLL_FARM = false`.
 - Status prints in F9 as `[TLL]` lines.
 
-## 31. Ultra Unfair (V1)
+## 31. Ultra Unfair (V2)
 Covers:
 - Auto attack with the game's own input
 - Kill aura, float, clone summons
@@ -428,7 +429,7 @@ Covers:
 - Aura range above ~23 or Float can get you kicked. **Alt only.**
 - The TEST buttons are measurement tools, not features.
 
-## 32. Wanted (V0.1.2)
+## 32. Wanted (V0.1.3)
 Criminal-route auto farm:
 - ATMs, safes, stores, jewelry and bank vaults
 - Airdrops, cargo jet
@@ -441,7 +442,7 @@ Plus police-side silent aim/ESP and crate opening.
 - Cargo jet, gas station safes and office PCs are beta. Report them separately.
 - When reporting, use **"Save incident snapshot now"**. Files go in `workspace/ZenX/Wanted`.
 
-## 33. Watch Number Go Up (V2)
+## 33. Watch Number Go Up (V3)
 Incremental farmer:
 - Runes and every upgrade tier
 - Prestige layers on timers
@@ -451,7 +452,7 @@ Incremental farmer:
 - Rejoin/Server Hop reload the tester build by themselves.
 - Use **Unload ZenX** (System tab) before re-executing.
 
-## 34. Wingblade Arena (V1)
+## 34. Wingblade Arena (V2)
 PvP spear arena:
 - Silent spear aim, aim assist, auto-block
 - Movement boosts, anti-knockback
@@ -466,7 +467,7 @@ PvP spear arena:
 - Risky features arm a staff guard that panics when the developer joins.
 - Re-run the loader in each new server.
 
-## 35. World // Zero (V2)
+## 35. World // Zero (V3)
 Covers:
 - Kill aura with the game's own attacks and skills
 - Dungeon loop (start, clear, chests, repeat/auto-level)
