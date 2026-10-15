@@ -1,0 +1,4 @@
+09:52:28: ID disk -  DiskPeripheral Scsi Bus 0\Target Id 0\Logical Unit Id 0 - Identifier: NVMe    WD Blue SN570 1T10WD, SerialNumber: E823_8FA6_BF53_0001_001B_444A_485F_807B. (Before)
+09:52:28: ID disk -  DiskPeripheral Scsi Bus 0\Target Id 0\Logical Unit Id 0 - Identifier: HP EX920 512GB, SerialNumber: XDYAEM06BY6GJ9 (After)
+09:52:28: ID mac -  MAC Address {FF34DFB9-8BFA-4CE9-A0B1-F667D937B139} - Before:  (Before)
+09:52:28: ID mac -  MAC Address {FF34DFB9-8BFA-4CE9-A0B1-F667D937B139} - After: 06-0D-24-E8-CE-A8 (After)
