@@ -9,8 +9,9 @@
 // White strokes on transparency so the UI can tint them with ImageColor3.
 // Bump PACK_VERSION whenever the layout or the icon set changes, then bump
 // ICON_PACK_VERSION in GUI.lua to the same number so clients re-download.
-// The zenx-* extras (loading splash) come from zenx/make_zenx_logo.py - run that first
-// when the logo changes.
+// The zenx-* extras (loading splash) come from zenx/make_zenx_logo.py (still badge) and
+// zenx/make_zenx_gyro.py (the animated gyro flipbook sheets + zenx/gyro.json, its layout,
+// which goes into pack.json as `gyro`) - run those first when the logo changes.
 import fs from 'node:fs'
 import path from 'node:path'
 import { createRequire } from 'node:module'
@@ -18,7 +19,7 @@ import { fileURLToPath } from 'node:url'
 import { Resvg } from '@resvg/resvg-js'
 import { PNG } from 'pngjs'
 
-const PACK_VERSION = 2
+const PACK_VERSION = 3
 const CELL = 48   // rendered icon size (px)
 const PITCH = 50  // cell + 1 px transparent gutter on each side (no bleeding when scaled)
 const COLS = 20   // 20 x 20 cells = 1000 x 1000 px per sheet
@@ -103,6 +104,12 @@ extras.banner = 'banner.png'
 const files = {}
 for (const file of [...sheets, ...Object.values(extras)]) files[file] = fs.statSync(path.join(outDir, file)).size
 const pack = { version: PACK_VERSION, lucide: lucideVersion, cell: CELL, pitch: PITCH, cols: COLS, perSheet: PER_SHEET, sheets, extras, files, names: canonical, aliases }
+// the splash flipbook layout; its sheets are ordinary extras (zenx-gyro-1 ...)
+const gyroFile = path.join(here, 'zenx', 'gyro.json')
+if (fs.existsSync(gyroFile)) {
+	pack.gyro = JSON.parse(fs.readFileSync(gyroFile, 'utf8'))
+	for (const key of pack.gyro.sheets) if (!extras[key]) throw new Error(`gyro sheet ${key} is not in extras/`)
+}
 fs.writeFileSync(path.join(outDir, 'pack.json'), JSON.stringify(pack))
 
 const total = Object.values(files).reduce((a, b) => a + b, 0)
