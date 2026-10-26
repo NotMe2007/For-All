@@ -9,6 +9,8 @@
 // White strokes on transparency so the UI can tint them with ImageColor3.
 // Bump PACK_VERSION whenever the layout or the icon set changes, then bump
 // ICON_PACK_VERSION in GUI.lua to the same number so clients re-download.
+// The zenx-* extras (loading splash) come from zenx/make_zenx_logo.py - run that first
+// when the logo changes.
 import fs from 'node:fs'
 import path from 'node:path'
 import { createRequire } from 'node:module'
@@ -16,7 +18,7 @@ import { fileURLToPath } from 'node:url'
 import { Resvg } from '@resvg/resvg-js'
 import { PNG } from 'pngjs'
 
-const PACK_VERSION = 1
+const PACK_VERSION = 2
 const CELL = 48   // rendered icon size (px)
 const PITCH = 50  // cell + 1 px transparent gutter on each side (no bleeding when scaled)
 const COLS = 20   // 20 x 20 cells = 1000 x 1000 px per sheet
