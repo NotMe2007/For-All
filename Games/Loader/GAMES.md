@@ -47,7 +47,7 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/mai
 | 20 | Jujutsu: Zero | V5 | Stable |
 | 21 | My Cafe | V2 | **Needs testing** |
 | 22 | Pay Your Debts! | V2 | **Needs testing** |
-| 23 | Pet Simulator 99 | v2.1 | Stable (Season Pass untested) |
+| 23 | Pet Simulator 99 | V1.0 | Stable (Season Pass untested) |
 | 24 | Pop & Collect (Pop Bubbles) | (none) | Experimental |
 | 25 | Reeled | V6 | **Needs testing** |
 | 26 | RIVALS | v4.5 | Stable |
@@ -335,11 +335,11 @@ The game swings for you. The hub steers your aim at the best piggy cluster and a
 - You only need Auto Aim + Auto Start Run.
 - **Leave "Unlock destructive actions" OFF.** Rebirth, Bankruptcy and Next Cycle wipe cycle progress, and "All In" is a real gamble.
 
-## 23. Pet Simulator 99 (v2.1)
+## 23. Pet Simulator 99 (V1.0)
 Covers:
 - Zone farm and the Hatch Wars event
 - Enchants, potions, pets, items, keys
-- Quests, rewards, minigames
+- Quests (incl. auto accept for the 1 Day / 3 Day / 1 Week quest machines), rewards, minigames
 
 **Notes:**
 - Re-runs itself after hops, so **don't** re-execute by hand.
