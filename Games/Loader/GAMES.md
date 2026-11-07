@@ -9,9 +9,9 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/mai
 
 - **No key or a wrong key:** nothing happens. That's intended, and it isn't a bug.
 - **Unsupported game:** you get a "This game is not supported" popup and a line in the F9 console.
-- **Hops:** hubs that reload themselves after a teleport (Break Your Bones, Gorilla Warfare, Hunt Giant Fish, Jujutsu: Zero raids, PS99, RIVALS, Route 06, Wanted, Watch Number Go Up, World // Zero) check for your tester key when they load. If it's there, the reload after a hop comes back as the **tester** build. Every other game needs a manual re-execute after a hop or rejoin.
-- **"Script is outdated" popup:** when the game updated after the script was last updated, the hub asks before it loads (**Load anyway** / **Don't load**). Load anyway is remembered for that game until it updates again (`workspace/ZenX_Studio/VersionCheck`). If you load anyway, say so in your report: those are exactly the bugs we need. RIVALS uses its own in-game version number for this.
-- **Your report:** the loader prints `[ZenX tester V4] <game> | GameId ... | PlaceId ...` in the console. Copy that line into every bug report. **ERLC is the exception:** nothing is printed there (see its section).
+- **Hops:** hubs that reload themselves after a teleport (Break Your Bones, Gorilla Warfare, Hunt Giant Fish, Jujutsu: Zero raids, PS99, Route 06, Wanted, Watch Number Go Up, World // Zero) check for your tester key when they load. If it's there, the reload after a hop comes back as the **tester** build. Every other game needs a manual re-execute after a hop or rejoin.
+- **"Script is outdated" popup:** when the game updated after the script was last updated, the hub asks before it loads (**Load anyway** / **Don't load**). Load anyway is remembered for that game until it updates again (`workspace/ZenX_Studio/VersionCheck`). If you load anyway, say so in your report: those are exactly the bugs we need.
+- **Your report:** the loader prints `[ZenX tester V5] <game> | GameId ... | PlaceId ...` in the console. Copy that line into every bug report. **ERLC is the exception:** nothing is printed there (see its section).
 - **Script version:** shown in the hub window title or on its Info/Settings tab.
 
 ## Before you report anything
@@ -49,17 +49,16 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/NotMe2007/For-All/mai
 | 22 | Pet Simulator 99 | V1.0 | Stable (Season Pass untested) |
 | 23 | Pop & Collect (Pop Bubbles) | (none) | Experimental |
 | 24 | Reeled | V6 | **Needs testing** |
-| 25 | RIVALS | v4.5 | Stable |
-| 26 | Route 06 | V3 | **Needs testing** |
-| 27 | Soul Eater: Resonance | V3 | Stable |
-| 28 | Soul Hero | V5 | **Needs testing** |
-| 29 | Steal An Egg | V6 | Stable |
-| 30 | The Lost Land | V2 | Stable (no GUI) |
-| 31 | Ultra Unfair | V2 | Stable |
-| 32 | Wanted | V0.1.3 | **Needs testing** |
-| 33 | Watch Number Go Up | V3 | Stable |
-| 34 | Wingblade Arena | V2 | Stable |
-| 35 | World // Zero | V3 | Stable |
+| 25 | Route 06 | V3 | **Needs testing** |
+| 26 | Soul Eater: Resonance | V3 | Stable |
+| 27 | Soul Hero | V5 | **Needs testing** |
+| 28 | Steal An Egg | V6 | Stable |
+| 29 | The Lost Land | V2 | Stable (no GUI) |
+| 30 | Ultra Unfair | V2 | Stable |
+| 31 | Wanted | V0.1.3 | **Needs testing** |
+| 32 | Watch Number Go Up | V3 | Stable |
+| 33 | Wingblade Arena | V2 | Stable |
+| 34 | World // Zero | V3 | Stable |
 
 **Status key:**
 - **Needs testing:** new or changed builds that haven't been played in-game much yet. Your reports matter most here.
@@ -359,19 +358,7 @@ Covers:
 - **Never press the death-screen Revive.** It costs Robux.
 - Auto refill ammo only works at the Ammo Box.
 
-## 25. RIVALS (v4.5)
-Covers:
-- Hold-RMB aimbot
-- ESP
-- Device spoof for the game's built-in aim assist
-- Anti-flash, anti-AFK, staff detection
-
-**Notes:**
-- **ESP and Melee Aura are the detected parts. Alts only.**
-- If RIVALS updated, a popup asks "Load anyway / Don't load". Report it.
-- Needs `Drawing` + `mousemoverel` support.
-
-## 26. Route 06 (V3)
+## 25. Route 06 (V3)
 Zombie co-op:
 - Silent aim, auto shoot, kill aura
 - Objectives, loot/shop at checkpoints
@@ -382,7 +369,7 @@ Zombie co-op:
 - RISKY toggles (gun aura, fast fire, reach, speed > 1.15x, noclip, car autopilot) are likely kick sources. Test them last.
 - **End** = kill switch.
 
-## 27. Soul Eater: Resonance (V3)
+## 26. Soul Eater: Resonance (V3)
 Covers:
 - Attack aura with smart block
 - Auto skills and silent aim
@@ -395,7 +382,7 @@ Covers:
 - Re-execute after every teleport.
 - **"Redeem resetmystats" really resets your stats.**
 
-## 28. Soul Hero (V5)
+## 27. Soul Hero (V5)
 Idle auto-battler:
 - Progress levels, skill tree, rebirth
 - Totems, summon/hatch/evolve heroes
@@ -408,7 +395,7 @@ Robux-prompt killswitch is on by default.
 - Being in a party blocks rebirth.
 - Re-execute after rejoin.
 
-## 29. Steal An Egg (V6)
+## 28. Steal An Egg (V6)
 Covers:
 - Place/hatch eggs, sell pets
 - Auto-steal with safe-escape prediction
@@ -420,7 +407,7 @@ Covers:
 - Guards can still catch you.
 - "Auto trade up + craft essence" is irreversible.
 
-## 30. The Lost Land (V2, no GUI)
+## 29. The Lost Land (V2, no GUI)
 Survival auto-farm: chop, mine, hunt weak animals, pick up drops, auto eat/drink/heal. It never touches player buildings.
 
 **Notes:**
@@ -428,7 +415,7 @@ Survival auto-farm: chop, mine, hunt weak animals, pick up drops, auto eat/drink
 - Stop it with `_G.TLL_FARM = false`.
 - Status prints in F9 as `[TLL]` lines.
 
-## 31. Ultra Unfair (V2)
+## 30. Ultra Unfair (V2)
 Covers:
 - Auto attack with the game's own input
 - Kill aura, float, clone summons
@@ -440,7 +427,7 @@ Covers:
 - Aura range above ~23 or Float can get you kicked. **Alt only.**
 - The TEST buttons are measurement tools, not features.
 
-## 32. Wanted (V0.1.3)
+## 31. Wanted (V0.1.3)
 Criminal-route auto farm:
 - ATMs, safes, stores, jewelry and bank vaults
 - Airdrops, cargo jet
@@ -453,7 +440,7 @@ Plus police-side silent aim/ESP and crate opening.
 - Cargo jet, gas station safes and office PCs are beta. Report them separately.
 - When reporting, use **"Save incident snapshot now"**. Files go in `workspace/ZenX/Wanted`.
 
-## 33. Watch Number Go Up (V3)
+## 32. Watch Number Go Up (V3)
 Incremental farmer:
 - Runes and every upgrade tier
 - Prestige layers on timers
@@ -463,7 +450,7 @@ Incremental farmer:
 - Rejoin/Server Hop reload the tester build by themselves.
 - Use **Unload ZenX** (System tab) before re-executing.
 
-## 34. Wingblade Arena (V2)
+## 33. Wingblade Arena (V2)
 PvP spear arena:
 - Silent spear aim, aim assist, auto-block
 - Movement boosts, anti-knockback
@@ -478,7 +465,7 @@ PvP spear arena:
 - Risky features arm a staff guard that panics when the developer joins.
 - Re-run the loader in each new server.
 
-## 35. World // Zero (V3)
+## 34. World // Zero (V3)
 Covers:
 - Kill aura with the game's own attacks and skills
 - Dungeon loop (start, clear, chests, repeat/auto-level)
